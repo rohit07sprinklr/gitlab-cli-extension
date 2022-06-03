@@ -1,8 +1,14 @@
-import { DOMAIN_NAME,PROJECT_ID } from './constants';
+import { DOMAIN_NAME,PROJECT_ID,PRIVATE_TOKEN } from './constants';
 
 async function getMergeRequestInfo(mergeRequestID) {
     return new Promise((resolve,reject)=>{
-        fetch(`https://${DOMAIN_NAME}/api/v4/projects/${PROJECT_ID}/merge_requests/${mergeRequestID}`)
+        fetch(`https://${DOMAIN_NAME}/api/v4/projects/${PROJECT_ID}/merge_requests/${mergeRequestID}`,
+        {
+          method: 'GET',
+          headers: {
+            'PRIVATE-TOKEN': PRIVATE_TOKEN
+          }
+        })
         .then((res)=>{
         if (res.ok) {
             return res.json();
