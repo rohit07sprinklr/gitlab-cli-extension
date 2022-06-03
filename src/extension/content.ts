@@ -9,6 +9,8 @@ import { fetchStream, streamBody } from "./fetchStream";
 
 import { DETAIL_PAGE_DESCRIPTION,GITLAB_CLI_DESC } from './constants';
 
+import {getMergeRequestInfo} from "./api";
+
 function isReady() {
   return getSourceBranch() && getTargetBranch();
 }
@@ -185,13 +187,31 @@ function initialise() {
 
 const main = () => {
   log("init");
+
+  const pathName = window.location.pathname
+  const mergeRequestID = pathName.split('/').at(-1);
+
   const interval = setInterval(async () => {
-    if (isReady()) {
+    
+    try{
+      let res = await getMergeRequestInfo(mergeRequestID);
       clearInterval(interval);
-      if (!isAlreadyMerged()) {
+      console.log(res);
+      if(!res.isMerged){
         initialise();
       }
+
+    }catch(e){
+      console.log(e);
     }
+
+    // if (isReady()) {
+    //   clearInterval(interval);
+    //   if (!isAlreadyMerged()) {
+    //     initialise();
+    //   }
+    // }
+
   }, 1000);
 
   /**
