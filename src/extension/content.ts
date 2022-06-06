@@ -189,7 +189,8 @@ function getProjectInfo(pathName){
   const midIndex = pathArray.findIndex((element)=>{
     return element == 'merge_requests';
   })
-  const repoURLName = pathArray.at(1) + '/' + pathArray.at(2);
+  const repoURLIndex = pathArray.slice(1,midIndex-1);
+  const repoURLName = repoURLIndex.join('/');
   return { mergeRequestID: pathArray.at(midIndex+1), repoURLName};
 }
 const main = () => {
