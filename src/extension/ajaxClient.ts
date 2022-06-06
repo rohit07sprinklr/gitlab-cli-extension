@@ -1,21 +1,18 @@
 import { DOMAIN_NAME,PRIVATE_TOKEN } from './constants/environmentVariables';
 
-export async function GET(path){
+async function fetchBuilder(method,path){
     return fetch(`https://${DOMAIN_NAME}/api/v4/${path}`,
     {
-        method: 'GET',
+        method: `${method}`,
         headers: {
         'PRIVATE-TOKEN': PRIVATE_TOKEN
         }
     })
 }
+export async function GET(path){
+    return fetchBuilder('GET',path);
+}
 export async function PUT(path){
-    return fetch(`https://${DOMAIN_NAME}/api/v4/${path}`,
-    {
-        method: 'PUT',
-        headers: {
-            'PRIVATE-TOKEN': PRIVATE_TOKEN
-        }
-    })
+    return fetchBuilder('PUT',path);
 }
 export * as ajaxClient from "./ajaxClient"
