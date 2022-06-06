@@ -9,4 +9,13 @@ export async function GET(path){
         }
     })
 }
+export async function PUT(path){
+    return fetch(`https://${DOMAIN_NAME}/api/v4/${path}`,
+    {
+        method: 'PUT',
+        headers: {
+            'PRIVATE-TOKEN': PRIVATE_TOKEN
+        }
+    })
+}
 export * as ajaxClient from "./ajaxClient"
