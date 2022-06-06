@@ -7,7 +7,9 @@ import {
 
 import { fetchStream, streamBody } from "./fetchStream";
 
-import { DETAIL_PAGE_DESCRIPTION,GITLAB_CLI_DESC } from './constants';
+import { DETAIL_PAGE_DESCRIPTION,GITLAB_CLI_DESC } from './constants/domClasses';
+
+import {getMergeRequestInfo} from "./api";
 
 function isReady() {
   return getSourceBranch() && getTargetBranch();
@@ -182,15 +184,28 @@ function initialise() {
     return false;
   });
 }
-
+function getProjectInfo(pathName){
+  let pathArray = pathName.split("/");
+  const midIndex = pathArray.findIndex((element)=>{
+    return element == 'merge_requests';
+  })
+  const repoURLIndex = pathArray.slice(1,midIndex-1);
+  const repoURLName = repoURLIndex.join('/');
+  return { mergeRequestID: pathArray.at(midIndex+1), repoURLName};
+}
 const main = () => {
   log("init");
+  const pathName = window.location.pathname;
+  const projectInfo = getProjectInfo(pathName);
   const interval = setInterval(async () => {
-    if (isReady()) {
+    try{
+      let res = await getMergeRequestInfo(projectInfo.repoURLName,projectInfo.mergeRequestID);
       clearInterval(interval);
-      if (!isAlreadyMerged()) {
+      if(!res.isMerged){
         initialise();
       }
+    }catch(e){
+      console.log(e);
     }
   }, 1000);
 

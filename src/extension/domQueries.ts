@@ -1,4 +1,4 @@
-import { STATUS_BADGE_MERGED,DETAIL_PAGE_DESCRIPTION } from './constants';
+import { STATUS_BADGE_MERGED,DETAIL_PAGE_DESCRIPTION } from './constants/domClasses';
 
 function isAlreadyMerged() {
   return !!document.querySelector(STATUS_BADGE_MERGED);
