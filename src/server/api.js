@@ -11,81 +11,22 @@ try {
   console.error("missing config.json");
   process.exit(1);
 }
+import PQueue from 'p-queue';
+const queue = new PQueue({concurrency: 1});
 
 const PORT = 4000;
 const app = express();
 
-app.listen(PORT, () => {
-  console.log("Gitlab CLI listening at 4000...");
+let count = 0;
+queue.on('active', () => {
+	console.log(`Working on Request #${++count}`);
 });
 
 function wait(millis) {
   return new Promise((res) => setTimeout(res, millis));
 }
 
-let cliStatus = "IDLE"; // 'IN_PROGRESS'
-
-let subscriptions = [];
-
-function markWIP() {
-  cliStatus = "IN_PROGRESS";
-}
-
-function markIdle() {
-  cliStatus = "IDLE";
-  subscriptions.forEach((i) => i());
-  subscriptions = [];
-}
-
-function finishExisting() {
-  return new Promise((res) => {
-    subscriptions.push(res);
-  });
-}
-
-app.get("/handshake", async function (req, res) {
-  const { location } = req.query;
-  if (config.repos.some((repo) => location.startsWith(repo.url))) {
-    if (cliStatus === "IDLE") {
-      res
-        .writeHead(200, {
-          "access-control-allow-origin": "*",
-        })
-        .end();
-      return;
-    }
-    res.writeHead(512, {
-      "Content-Type": "text/plain",
-      "Transfer-Encoding": "chunked",
-      "access-control-allow-origin": "*",
-    });
-    res.write("CLI busy");
-    await finishExisting();
-    res.write("CLI free");
-    res.end();
-    return;
-  }
-  res
-    .writeHead(500, {
-      "access-control-allow-origin": "*",
-    })
-    .end();
-});
-
-app.get("/merge", async function (req, res) {
-  res.writeHead(200, {
-    "Content-Type": "text/plain",
-    "Transfer-Encoding": "chunked",
-    "access-control-allow-origin": "*",
-  });
-  if (cliStatus !== "IDLE") {
-    res.write(`CLI Busy`);
-    await wait(100);
-    res.write(`ERROR`);
-    res.end();
-    return;
-  }
-  markWIP();
+async function mergeProcess(req,res){
   try {
     const { source, target, location } = req.query;
     const path = config.repos.find((repo) =>
@@ -124,9 +65,10 @@ app.get("/merge", async function (req, res) {
       console.log("end merge successfully");
     }
     else if(conflictStatus.startsWith("CONFLICT")){
+      await wait(10000);
       console.log('Conflict Encountered: Aborting');
       await git(path).raw("merge", "--abort");
-      throw new Error("Conflict Encountered: Merge Aborted!");
+      res.write(`Conflict Encountered: Merge Aborted!`);
     }
     res.end();
   } catch (e) {
@@ -137,5 +79,31 @@ app.get("/merge", async function (req, res) {
     console.log("end merge failure");
     res.end();
   }
-  markIdle();
+}
+
+app.get("/handshake", async function (req, res) {
+  const { location } = req.query;
+  if (config.repos.some((repo) => location.startsWith(repo.url))) {
+    res.writeHead(200, {
+        "access-control-allow-origin": "*",
+      }).end();
+    return;
+  }
+  res.writeHead(500, {
+      "access-control-allow-origin": "*",
+    }).end();
+});
+
+app.get("/merge", async function (req, res) {
+  res.writeHead(200, {
+    "Content-Type": "text/plain",
+    "Transfer-Encoding": "chunked",
+    "access-control-allow-origin": "*",
+  });
+  res.write(`Merge Queued`);
+  queue.add(async () => await mergeProcess(req,res));
+});
+
+app.listen(PORT, () => {
+  console.log("Gitlab CLI listening at 4000...");
 });

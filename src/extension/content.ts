@@ -48,6 +48,7 @@ function renderMergeButton(sourceBranch, targetBranch) {
     } catch (e) {
       enableButtons();
       button.textContent = "Retry Merge";
+      setContentInDesc(e);
     }
   };
   const buttonGroup = document.querySelector(".d-flex");
@@ -202,7 +203,7 @@ const main = () => {
     }catch(e){
       console.log(e);
     }
-  }, 1000);
+  }, 1500);
 };
 
 main();
