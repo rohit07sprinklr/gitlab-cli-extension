@@ -65,7 +65,7 @@ async function mergeProcess(req,res){
       console.log("end merge successfully");
     }
     else if(conflictStatus.startsWith("CONFLICT")){
-      await wait(10000);
+      await wait(2000);
       console.log('Conflict Encountered: Aborting');
       await git(path).raw("merge", "--abort");
       res.write(`Conflict Encountered: Merge Aborted!`);
