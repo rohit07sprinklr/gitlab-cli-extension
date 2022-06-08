@@ -133,8 +133,25 @@ function enableButtons() {
     el.disabled = false;
   });
 }
+function wait(millis) {
+  return new Promise((res) => setTimeout(res, millis));
+}
 
-async function initialise(repoURLName,mergeRequestID,sourceBranch,targetBranch) {
+async function waitCompleteRebase(repoURLName,mergeRequestID){
+  while(true){
+    try{
+        const statusResponse = await getMergeRequestInfo(repoURLName,mergeRequestID);
+        if(statusResponse.rebase_in_progress==false){
+            return statusResponse;
+        }
+        await wait(5000);
+    }catch(error){
+        return error;
+    }
+  }
+}
+
+async function initialise(repoURLName,mergeRequestID,sourceBranch,targetBranch,rebaseINProgress) {
 
   const referenceEl = document.querySelector(DETAIL_PAGE_DESCRIPTION);
   const el = render();
@@ -146,6 +163,11 @@ async function initialise(repoURLName,mergeRequestID,sourceBranch,targetBranch) 
   disableButtons();
   mergeButton.classList.remove(GITLAB_CLI_BUTTON);
   renderRebaseButton(repoURLName, mergeRequestID);
+  if(rebaseINProgress==true){
+    disableButtons();
+    await waitCompleteRebase(repoURLName,mergeRequestID);
+    enableButtons();
+  }
 
   try{
     await fetch(`http://localhost:4000/handshake?location=${window.location}`)
@@ -198,7 +220,7 @@ const main = () => {
       let res = await getMergeRequestInfo(projectInfo.repoURLName,projectInfo.mergeRequestID);
       clearInterval(interval);
       if(!res.isMerged){
-        initialise(projectInfo.repoURLName,projectInfo.mergeRequestID,res.sourceBranch,res.targetBranch);
+        initialise(projectInfo.repoURLName,projectInfo.mergeRequestID,res.sourceBranch,res.targetBranch,res.rebaseINProgress);
       }
     }catch(e){
       console.log(e);
