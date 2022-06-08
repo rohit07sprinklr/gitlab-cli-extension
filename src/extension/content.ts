@@ -215,7 +215,7 @@ const main = () => {
   log("init");
   const pathName = window.location.pathname;
   const projectInfo = getProjectInfo(pathName);
-  const interval = setInterval(async () => {
+  const interval = setInterval(async function renderWidget(){
     try{
       let res = await getMergeRequestInfo(projectInfo.repoURLName,projectInfo.mergeRequestID);
       clearInterval(interval);
@@ -225,7 +225,7 @@ const main = () => {
     }catch(e){
       console.log(e);
     }
-  }, 1500);
+  }(), 5000);
 };
 
 main();
