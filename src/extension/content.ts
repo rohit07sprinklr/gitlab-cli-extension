@@ -102,6 +102,11 @@ function renderDescription() {
 
 function render() {
   const rootDiv = document.createElement("div");
+  rootDiv.style.display='flex';
+  rootDiv.style.flexDirection='column';
+  rootDiv.style.maxWidth='958px';
+  rootDiv.style.marginLeft='auto';
+  rootDiv.style.marginRight='auto';
   rootDiv.classList.add("mr-widget-heading", "append-bottom-default");
 
   const containerDiv = document.createElement("div");
@@ -211,21 +216,27 @@ function getProjectInfo(pathName){
   const repoURLName = repoURLIndex.join('/');
   return { mergeRequestID: pathArray.at(midIndex+1), repoURLName};
 }
+async function renderWidget(projectInfo){
+  let retryCounter = 1;
+  while(retryCounter<=2){
+    try{
+      let res = await getMergeRequestInfo(projectInfo.repoURLName,projectInfo.mergeRequestID);
+      if(!res.isMerged){
+        initialise(projectInfo.repoURLName,projectInfo.mergeRequestID,res.sourceBranch,res.targetBranch,res.rebaseINProgress);
+        return;
+      }
+    }catch(e){
+        console.log(e);
+    }
+    await wait(2000);
+    retryCounter+=1;
+  }
+}
 const main = () => {
   log("init");
   const pathName = window.location.pathname;
   const projectInfo = getProjectInfo(pathName);
-  const interval = setInterval(async function renderWidget(){
-    try{
-      let res = await getMergeRequestInfo(projectInfo.repoURLName,projectInfo.mergeRequestID);
-      clearInterval(interval);
-      if(!res.isMerged){
-        initialise(projectInfo.repoURLName,projectInfo.mergeRequestID,res.sourceBranch,res.targetBranch,res.rebaseINProgress);
-      }
-    }catch(e){
-      console.log(e);
-    }
-  }(), 5000);
+  renderWidget(projectInfo);
 };
 
 main();

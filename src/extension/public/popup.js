@@ -1,12 +1,25 @@
 const generateToken= document.getElementById('generate_cli_token');
-generateToken.addEventListener('click',()=>{
-    chrome.tabs.create({active: true, url: "https://gitlab.com/-/profile/personal_access_tokens?create_gitlabcli_token=true"});
+async function getCurrentTab() {
+    let queryOptions = { active: true, lastFocusedWindow: true };
+    let [tab] = await chrome.tabs.query(queryOptions);
+    return tab;
+}
+generateToken.addEventListener('click',async ()=>{
+    const currentTab = await getCurrentTab();
+    const currentURL = new URL(currentTab.url);
+    const ORIGN = currentURL.origin;
+    chrome.storage.sync.set({ 'gitTokenCopy':true });
+    chrome.tabs.create({active: true, url: `${ORIGN}/-/profile/personal_access_tokens?create_gitlabcli_token=true`});
 })
 
 function updateToken(){
     const privateTokenInput = form.elements['private-token'];
     try{
         chrome.storage.sync.get(['gitToken'], function(items) {
+            if(!(items.gitToken) || (items.gitToken).trim() === ''){
+                privateTokenInput.value = 'No Tokens Found!'
+            }
+            else
             privateTokenInput.value = items.gitToken;
         });
     }catch{
@@ -28,13 +41,13 @@ form.addEventListener('submit',async (e)=>{
         successhandler.style.display = 'block';
         setTimeout(()=>{
             successhandler.style.display = 'none';
-        },2000);
+        },500);
     }catch{
         const errorhandler= document.getElementById('status-errorhandler');
         errorhandler.style.display = 'block';
         setTimeout(()=>{
             errorhandler.style.display = 'none';
-        },2000);
+        },500);
     }
 });
 

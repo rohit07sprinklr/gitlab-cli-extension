@@ -1,4 +1,5 @@
-import { DOMAIN_NAME } from './constants/environmentVariables';
+const currentURL = new URL(window.location);
+const ORIGIN = currentURL.origin;
 
 async function getPrivateToken(){
     return new Promise((resolve,reject)=>{
@@ -14,7 +15,7 @@ async function getPrivateToken(){
 
 async function fetchBuilder(method,path){
     const PRIVATE_TOKEN = await getPrivateToken();
-    return fetch(`https://${DOMAIN_NAME}/api/v4/${path}`,
+    return fetch(`${ORIGIN}/api/v4/${path}`,
     {
         method,
         headers: {

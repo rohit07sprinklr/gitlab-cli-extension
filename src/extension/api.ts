@@ -15,7 +15,7 @@ async function getMergeRequestInfo(repoURLName,mergeRequestID) {
             rebaseINProgress: jsonResponse.rebase_in_progress};
     }
     catch(e){
-    return new Error('Cannot fetch Data for given mergeRequestID');
+    throw new Error('Cannot fetch Data for given mergeRequestID');
     }
 }
 
@@ -42,7 +42,7 @@ async function putRebaseRequest(repoURLName,mergeRequestID,setContentInDesc){
         }
     }
     catch(e){
-        return e;
+        throw e;
     }
 }
 
