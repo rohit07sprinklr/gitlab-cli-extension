@@ -102,7 +102,7 @@ app.get("/merge", async function (req, res) {
     "Transfer-Encoding": "chunked",
     "access-control-allow-origin": "*",
   });
-  res.write(`Merge Queued`);
+  res.write(`Merge Queued `);
   queue.add(async () => await mergeProcess(req,res));
 });
 

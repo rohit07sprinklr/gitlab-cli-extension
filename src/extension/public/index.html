@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="style.css">
+    <script src="popup.js" defer></script>
+  </head>
+  <body>
+    <div class="app-header">
+      <h2>GitLab API Extension v1.0</h2>
+    </div>
+    <hr>
+    <form id="token-form">
+      <label for="private-token">Personal access token:</label>
+      <input id ="private-token" type="text">
+      <div id="status-successhandler">Successfuly Updated!</div>
+     <div id="status-errorhandler">Update failed!</div>
+      <button type="submit" id="form-submit">Update</button>  
+      <button id="form-cleartoken" type="button">Remove Token</button>  
+    </form>
+    <button id="generate_cli_token" style="margin-left: 5px;">Generate New Token</button>
+  </body>
+</html>
