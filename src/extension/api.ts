@@ -30,7 +30,7 @@ async function putRebaseRequest(repoURLName,mergeRequestID,setContentInDesc){
                     if(statusJSONresponse.rebase_in_progress==false){
                         return statusJSONresponse;
                     }
-                    await wait(100);
+                    await wait(10000);
                 }catch(e){
                     break;
                 }

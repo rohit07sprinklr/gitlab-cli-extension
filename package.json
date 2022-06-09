@@ -6,7 +6,8 @@
   "dependencies": {
     "esbuild": "^0.12.21",
     "express": "^4.17.1",
-    "simple-git": "^2.44.0"
+    "p-queue": "^7.2.0",
+    "simple-git": "^3.7.1"
   },
   "scripts": {
     "build": "rm -rf dist && node build.js"
