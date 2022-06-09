@@ -107,6 +107,7 @@ function render() {
   rootDiv.style.maxWidth='958px';
   rootDiv.style.marginLeft='auto';
   rootDiv.style.marginRight='auto';
+  rootDiv.style.marginTop='16px';
   rootDiv.classList.add("mr-widget-heading", "append-bottom-default");
 
   const containerDiv = document.createElement("div");
@@ -161,7 +162,7 @@ async function initialise(repoURLName,mergeRequestID,sourceBranch,targetBranch,r
   const referenceEl = document.querySelector(DETAIL_PAGE_DESCRIPTION);
   const el = render();
   referenceEl.classList.add("mr-widget-workflow");
-  referenceEl.parentElement.prepend(el);
+  referenceEl.append(el);
 
   renderMergeButton(sourceBranch,targetBranch);
   const mergeButton = document.getElementById('gitlab-cli-merge');

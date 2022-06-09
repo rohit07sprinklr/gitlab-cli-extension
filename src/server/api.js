@@ -52,8 +52,8 @@ async function mergeProcess(req,res){
     res.write(`Checking conflicts`);
 
     const result = await git(path).raw("merge","--no-ff", source);
-    const conflictStatus = (result.split('\n'))[1];
-    if(conflictStatus.startsWith("CONFLICT")){
+    const mergeStatus = (result.split('\n'))[1];
+    if(mergeStatus.startsWith("CONFLICT")){
       const conflictMessage = (result.split('\n'))[2];
       await wait(1000);
       console.log('Conflict Encountered: Aborting');
@@ -74,11 +74,11 @@ async function mergeProcess(req,res){
     console.log("end merge successfully");
     res.end();
   } catch (e) {
-    res.write(`error: ${e.toString()}`);
+    res.write(`ERROR: ${e.toString()}`);
     await wait(1000);
     res.write(`ERROR`);
     console.error(e);
-    console.log("end merge failure");
+    console.log("End merge failure");
     res.end();
   }
 }
