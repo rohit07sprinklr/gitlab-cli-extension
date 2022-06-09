@@ -4,6 +4,12 @@ async function getCurrentTab() {
     let [tab] = await chrome.tabs.query(queryOptions);
     return tab;
 }
+document.addEventListener('DOMContentLoaded',async ()=>{
+    const currentTab = await getCurrentTab();
+    if(currentTab.url.indexOf('gitlab') > -1){
+        generateToken.style.display='block';
+    }
+});
 generateToken.addEventListener('click',async ()=>{
     const currentTab = await getCurrentTab();
     const currentURL = new URL(currentTab.url);
