@@ -25,16 +25,16 @@ const main = () => {
     if(windowURL.searchParams.toString()=='create_gitlabcli_token=true'){
         const inputArray = Array.from(document.querySelectorAll('input'));
         fillTokenScope(inputArray);
-        fillTokenName(inputArray)
+        fillTokenName(inputArray);
         fillTokenDate(inputArray);
-        submitToken(inputArray);   
+        submitToken(inputArray);
     }
     else{
         const token = document.querySelector(".created-personal-access-token-container");
         if(token!=null){
             try{
                 chrome.storage.sync.get(['gitTokenCopy'], function(items) {
-                    if(!!(items.gitTokenCopy) || (items.gitTokenCopy) === true){
+                    if((items.gitTokenCopy) === true){
                         const tokenBox = document.getElementById('created-personal-access-token');
                         const tokenID = tokenBox.value;
                         chrome.storage.sync.set({ 'gitToken': tokenID });

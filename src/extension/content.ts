@@ -2,7 +2,7 @@ import { log } from "./log";
 
 import { fetchStream, streamBody } from "./fetchStream";
 
-import { DETAIL_PAGE_DESCRIPTION,GITLAB_CLI_DESC,GITLAB_CLI_BUTTON } from './constants/domClasses';
+import { MR_WIDGET_SECTION,GITLAB_CLI_DESC,GITLAB_CLI_BUTTON } from './constants/domClasses';
 
 import {getMergeRequestInfo,putRebaseRequest} from "./api";
 
@@ -51,7 +51,7 @@ function renderMergeButton(sourceBranch, targetBranch) {
       setContentInDesc(e);
     }
   };
-  const buttonGroup = document.querySelector(".d-flex");
+  const buttonGroup = document.querySelector(".mr-widget-section .d-flex");
   buttonGroup.appendChild(button);
 }
 
@@ -80,7 +80,7 @@ function renderRebaseButton(repoURLName, mergeRequestID) {
       setContentInDesc(e);
     }
   };
-  const buttonGroup = document.querySelector(".d-flex");
+  const buttonGroup = document.querySelector(".mr-widget-section .d-flex");
   button.style.marginLeft = "10px";
   buttonGroup.appendChild(button);
 }
@@ -96,7 +96,6 @@ function renderDescription() {
   descriptionAreaEl.style.border = "1px solid #e5e5e5";
   descriptionAreaEl.style.backgroundColor = "#fafafa";
   descriptionAreaEl.style.padding = "12px";
-
   return descriptionAreaEl;
 }
 
@@ -104,7 +103,6 @@ function render() {
   const rootDiv = document.createElement("div");
   rootDiv.style.display='flex';
   rootDiv.style.flexDirection='column';
-  rootDiv.style.maxWidth='958px';
   rootDiv.style.marginLeft='auto';
   rootDiv.style.marginRight='auto';
   rootDiv.style.marginTop='16px';
@@ -158,53 +156,61 @@ async function getIsRebaseCompleted(repoURLName,mergeRequestID){
 }
 
 async function initialise(repoURLName,mergeRequestID,sourceBranch,targetBranch,isRebaseInProgress) {
+  let retryCounter = 1;
+  while(retryCounter<=5){
+    const referenceEl = document.querySelector(MR_WIDGET_SECTION);
+    if(referenceEl!=null){
+      log('Widget section loaded');
+      const el = render();
+      referenceEl.classList.add("mr-widget-workflow");
+      referenceEl.prepend(el);
 
-  const referenceEl = document.querySelector(DETAIL_PAGE_DESCRIPTION);
-  const el = render();
-  referenceEl.classList.add("mr-widget-workflow");
-  referenceEl.append(el);
-
-  renderMergeButton(sourceBranch,targetBranch);
-  const mergeButton = document.getElementById('gitlab-cli-merge');
-  disableButtons();
-  mergeButton.classList.remove(GITLAB_CLI_BUTTON);
-  renderRebaseButton(repoURLName, mergeRequestID);
-  if(isRebaseInProgress==true){
-    disableButtons();
-    await getIsRebaseCompleted(repoURLName,mergeRequestID);
-    enableButtons();
-  }
-
-  try{
-    await fetch(`http://localhost:4000/handshake?location=${window.location}`)
-    .then((r) => {
-    if (r.status === 200) {
+      renderMergeButton(sourceBranch,targetBranch);
       const mergeButton = document.getElementById('gitlab-cli-merge');
-      mergeButton.classList.add(GITLAB_CLI_BUTTON);
-      enableButtons();
-      return true;
-    }
-    if (r.status === 500) {
-      return false;
-    }
-    if (r.status === 512) {
-      const descEl = document.getElementById(GITLAB_CLI_DESC);
-      setContentInDesc("CLI busy");
-      streamBody(r.body, (chunkString) => {
-        descEl.textContent = chunkString;
-      }).then(() => {
-        clearContentInDesc();
-        const mergeButton = document.getElementById('gitlab-cli-merge');
-        mergeButton.classList.add(GITLAB_CLI_BUTTON);
+      disableButtons();
+      mergeButton.classList.remove(GITLAB_CLI_BUTTON);
+      renderRebaseButton(repoURLName, mergeRequestID);
+      if(isRebaseInProgress==true){
+        disableButtons();
+        await getIsRebaseCompleted(repoURLName,mergeRequestID);
         enableButtons();
-      });
-      return false;
+      }
+
+      try{
+        await fetch(`http://localhost:4000/handshake?location=${window.location}`)
+        .then((r) => {
+        if (r.status === 200) {
+          const mergeButton = document.getElementById('gitlab-cli-merge');
+          mergeButton.classList.add(GITLAB_CLI_BUTTON);
+          enableButtons();
+          return true;
+        }
+        if (r.status === 500) {
+          return false;
+        }
+        if (r.status === 512) {
+          const descEl = document.getElementById(GITLAB_CLI_DESC);
+          setContentInDesc("CLI busy");
+          streamBody(r.body, (chunkString) => {
+            descEl.textContent = chunkString;
+          }).then(() => {
+            clearContentInDesc();
+            const mergeButton = document.getElementById('gitlab-cli-merge');
+            mergeButton.classList.add(GITLAB_CLI_BUTTON);
+            enableButtons();
+          });
+          return false;
+        }
+        return false;
+        });
+      }catch{
+        console.log('Server not initialised!');
+        setContentInDesc(`Server not initialised, Merge via CLI Disabled, Rebase Enabled!`);
+      }
+      break;
     }
-    return false;
-    });
-  }catch{
-    console.log('Server not initialised!');
-    setContentInDesc(`Server not initialised, Merge via CLI Disabled, Rebase Enabled!`);
+    await wait(1000);
+    retryCounter+=1;
   }
 }
 
@@ -240,6 +246,6 @@ const main = () => {
   renderWidget(projectInfo);
 };
 
-main();
+window.addEventListener ("load", main, false);
 
 export {};
