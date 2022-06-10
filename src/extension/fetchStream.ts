@@ -33,7 +33,10 @@ function streamBody(body, onChunkReceive) {
       });
     })
     .then((rs) => new Response(rs))
-    .then((response) => response.text());
+    .then((response) => response.text())
+    .catch((e)=>{
+      throw new Error(`Automatic merge failed; fix conflicts and then commit the result.`);
+    });
 }
 
 function fetchStream(url, onChunkReceive) {

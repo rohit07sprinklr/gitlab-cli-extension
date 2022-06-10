@@ -12,7 +12,7 @@ async function getMergeRequestInfo(repoURLName,mergeRequestID) {
             targetBranch: jsonResponse.target_branch,
             isMerged: !(jsonResponse.state === 'opened'),
             hasMergeConflict: jsonResponse.has_conflicts,
-            rebaseINProgress: jsonResponse.rebase_in_progress};
+            isRebaseInProgress: jsonResponse.rebase_in_progress};
     }
     catch(e){
     throw new Error('Cannot fetch Data for given mergeRequestID');

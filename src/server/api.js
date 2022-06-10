@@ -69,13 +69,11 @@ async function mergeProcess(req,res){
 
     console.log(`pushed ${target}`);
     res.write(`pushed ${target}`);
-    await wait(2000);
+    await wait(1000);
     res.write(`Merged`);
     console.log("end merge successfully");
     res.end();
   } catch (e) {
-    res.write(`ERROR: ${e.toString()}`);
-    await wait(1000);
     res.write(`ERROR`);
     console.error(e);
     console.log("End merge failure");

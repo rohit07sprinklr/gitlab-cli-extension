@@ -8,24 +8,18 @@ const main = () => {
             element.setAttribute("checked",true);
         })
         
-        const tokenName = inputArray.filter(input => input.name === 'personal_access_token[name]');
-        tokenName.forEach((element)=>{
-            element.value = 'GitlabCLIToken';
-        })
+        const tokenName = inputArray.find(input => input.name === 'personal_access_token[name]');
+        tokenName.value = 'GitlabCLIToken';
 
-        const tokenExpireDate = inputArray.filter(input => input.name === 'personal_access_token[expires_at]');
+        const tokenExpireDate = inputArray.find(input => input.name === 'personal_access_token[expires_at]');
         const today = new Date();
-        const date = (today.getFullYear()+1)+'-'+("0" + (today.getMonth()+1)).slice(-2)+'-'+("0" + (today.getDate()+1)).slice(-2);
-        tokenExpireDate.forEach((element)=>{
-            element.value = date;
-        })
+        const date = `${today.getFullYear()+1}-${("0" + (today.getMonth()+1)).slice(-2)}-${("0" + (today.getDate()+1)).slice(-2)}`;
+        tokenExpireDate.value = date;
 
-        const submitButton = inputArray.filter(input => input.name === 'commit');
-        submitButton.forEach((element)=>{
-            element.classList.remove('disabled');
-            element.removeAttribute("disabled");
-            element.click();
-        })
+        const submitButton = inputArray.find(input => input.name === 'commit');
+        submitButton.classList.remove('disabled');
+        submitButton.removeAttribute("disabled");
+        submitButton.click();
     }
     else{
         const token = document.querySelector(".created-personal-access-token-container");

@@ -39,17 +39,17 @@ body{
     margin: 5px;
     text-align: center;
   }
-  #status-successhandler{
+  .status-success-handler{
     display: none;
     margin-bottom: 10px;
     color: green;
   }
-  #status-errorhandler{
+  .status-error-handler{
     display: none;
     margin-bottom: 10px;
     color: red;
   }
-  #generate_cli_token{
+  .generate-cli-token{
     padding: 0px;
     font-size: 17px;
     text-decoration: underline;
@@ -58,7 +58,7 @@ body{
     border: none;
     display: none;
   }
-  #generate_cli_token:hover{
+  .generate-cli-token:hover{
     cursor:pointer;
     color: rgb(7, 3, 143);
   }

@@ -143,7 +143,7 @@ function wait(millis) {
   return new Promise((res) => setTimeout(res, millis));
 }
 
-async function waitCompleteRebase(repoURLName,mergeRequestID){
+async function getIsRebaseCompleted(repoURLName,mergeRequestID){
   while(true){
     try{
         const statusResponse = await getMergeRequestInfo(repoURLName,mergeRequestID);
@@ -157,7 +157,7 @@ async function waitCompleteRebase(repoURLName,mergeRequestID){
   }
 }
 
-async function initialise(repoURLName,mergeRequestID,sourceBranch,targetBranch,rebaseINProgress) {
+async function initialise(repoURLName,mergeRequestID,sourceBranch,targetBranch,isRebaseInProgress) {
 
   const referenceEl = document.querySelector(DETAIL_PAGE_DESCRIPTION);
   const el = render();
@@ -169,9 +169,9 @@ async function initialise(repoURLName,mergeRequestID,sourceBranch,targetBranch,r
   disableButtons();
   mergeButton.classList.remove(GITLAB_CLI_BUTTON);
   renderRebaseButton(repoURLName, mergeRequestID);
-  if(rebaseINProgress==true){
+  if(isRebaseInProgress==true){
     disableButtons();
-    await waitCompleteRebase(repoURLName,mergeRequestID);
+    await getIsRebaseCompleted(repoURLName,mergeRequestID);
     enableButtons();
   }
 
@@ -223,7 +223,7 @@ async function renderWidget(projectInfo){
     try{
       let res = await getMergeRequestInfo(projectInfo.repoURLName,projectInfo.mergeRequestID);
       if(!res.isMerged){
-        initialise(projectInfo.repoURLName,projectInfo.mergeRequestID,res.sourceBranch,res.targetBranch,res.rebaseINProgress);
+        initialise(projectInfo.repoURLName,projectInfo.mergeRequestID,res.sourceBranch,res.targetBranch,res.isRebaseInProgress);
         return;
       }
     }catch(e){

@@ -8,7 +8,7 @@ async function getPrivateToken(){
                 resolve(items.gitToken);
             });
         }catch(e){
-            reject(e);
+            console.log(e);
         }
     }) 
 }
