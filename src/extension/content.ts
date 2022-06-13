@@ -107,6 +107,7 @@ function render() {
   rootDiv.style.marginRight='auto';
   rootDiv.style.marginTop='16px';
   rootDiv.classList.add("mr-widget-heading", "append-bottom-default");
+  rootDiv.style.border='none';
 
   const containerDiv = document.createElement("div");
   containerDiv.classList.add("mr-widget-content");
