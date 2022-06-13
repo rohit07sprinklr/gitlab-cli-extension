@@ -241,7 +241,7 @@ const main = () => {
 
   const callback = function(mutationList, observer) {
   for(const mutation of mutationList) {
-      if(mutation.target.classList.contains('mr-widget-section')){
+      if(mutation.target.classList.contains('mr-section-container')){
         log('Widget section loaded');
         observer.disconnect();
         renderWidget(projectInfo);
