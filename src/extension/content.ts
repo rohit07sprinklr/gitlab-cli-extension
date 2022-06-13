@@ -235,7 +235,11 @@ const main = () => {
   log("init");
   const pathName = window.location.pathname;
   const projectInfo = getProjectInfo(pathName);
-  
+  const sectionContainer = document.querySelector('.mr-section-container');
+  if(sectionContainer!=null){
+    renderWidget(projectInfo);
+    return;
+  }
   const targetNode = document.querySelector('.issuable-discussion');
   const config = { childList: true, subtree: true };
 
@@ -254,6 +258,6 @@ const main = () => {
   observer.observe(targetNode, config);
 };
 
-window.addEventListener ("load", main, false);
+main();
 
 export {};
