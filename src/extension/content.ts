@@ -157,61 +157,52 @@ async function getIsRebaseCompleted(repoURLName,mergeRequestID){
 }
 
 async function initialise(repoURLName,mergeRequestID,sourceBranch,targetBranch,isRebaseInProgress) {
-  let retryCounter = 1;
-  while(retryCounter<=5){
-    const referenceEl = document.querySelector(MR_WIDGET_SECTION);
-    if(referenceEl!=null){
-      log('Widget section loaded');
-      const el = render();
-      referenceEl.classList.add("mr-widget-workflow");
-      referenceEl.prepend(el);
+  const referenceEl = document.querySelector(MR_WIDGET_SECTION);
+  const el = render();
+  referenceEl.classList.add("mr-widget-workflow");
+  referenceEl.prepend(el);
 
-      renderMergeButton(sourceBranch,targetBranch);
+  renderMergeButton(sourceBranch,targetBranch);
+  const mergeButton = document.getElementById('gitlab-cli-merge');
+  disableButtons();
+  mergeButton.classList.remove(GITLAB_CLI_BUTTON);
+  renderRebaseButton(repoURLName, mergeRequestID);
+  if(isRebaseInProgress==true){
+    disableButtons();
+    await getIsRebaseCompleted(repoURLName,mergeRequestID);
+    enableButtons();
+  }
+
+  try{
+    await fetch(`http://localhost:4000/handshake?location=${window.location}`)
+    .then((r) => {
+    if (r.status === 200) {
       const mergeButton = document.getElementById('gitlab-cli-merge');
-      disableButtons();
-      mergeButton.classList.remove(GITLAB_CLI_BUTTON);
-      renderRebaseButton(repoURLName, mergeRequestID);
-      if(isRebaseInProgress==true){
-        disableButtons();
-        await getIsRebaseCompleted(repoURLName,mergeRequestID);
-        enableButtons();
-      }
-
-      try{
-        await fetch(`http://localhost:4000/handshake?location=${window.location}`)
-        .then((r) => {
-        if (r.status === 200) {
-          const mergeButton = document.getElementById('gitlab-cli-merge');
-          mergeButton.classList.add(GITLAB_CLI_BUTTON);
-          enableButtons();
-          return true;
-        }
-        if (r.status === 500) {
-          return false;
-        }
-        if (r.status === 512) {
-          const descEl = document.getElementById(GITLAB_CLI_DESC);
-          setContentInDesc("CLI busy");
-          streamBody(r.body, (chunkString) => {
-            descEl.textContent = chunkString;
-          }).then(() => {
-            clearContentInDesc();
-            const mergeButton = document.getElementById('gitlab-cli-merge');
-            mergeButton.classList.add(GITLAB_CLI_BUTTON);
-            enableButtons();
-          });
-          return false;
-        }
-        return false;
-        });
-      }catch{
-        console.log('Server not initialised!');
-        setContentInDesc(`Server not initialised, Merge via CLI Disabled, Rebase Enabled!`);
-      }
-      break;
+      mergeButton.classList.add(GITLAB_CLI_BUTTON);
+      enableButtons();
+      return true;
     }
-    await wait(1000);
-    retryCounter+=1;
+    if (r.status === 500) {
+      return false;
+    }
+    if (r.status === 512) {
+      const descEl = document.getElementById(GITLAB_CLI_DESC);
+      setContentInDesc("CLI busy");
+      streamBody(r.body, (chunkString) => {
+        descEl.textContent = chunkString;
+      }).then(() => {
+        clearContentInDesc();
+        const mergeButton = document.getElementById('gitlab-cli-merge');
+        mergeButton.classList.add(GITLAB_CLI_BUTTON);
+        enableButtons();
+      });
+      return false;
+    }
+    return false;
+    });
+  }catch{
+    console.log('Server not initialised!');
+    setContentInDesc(`Server not initialised, Merge via CLI Disabled, Rebase Enabled!`);
   }
 }
 
@@ -244,7 +235,23 @@ const main = () => {
   log("init");
   const pathName = window.location.pathname;
   const projectInfo = getProjectInfo(pathName);
-  renderWidget(projectInfo);
+  
+  const targetNode = document.querySelector('.issuable-discussion');
+  const config = { childList: true, subtree: true };
+
+  const callback = function(mutationList, observer) {
+  for(const mutation of mutationList) {
+      if(mutation.target.classList.contains('mr-widget-section')){
+        log('Widget section loaded');
+        observer.disconnect();
+        renderWidget(projectInfo);
+        break;
+      }
+  }
+  };
+
+  const observer = new MutationObserver(callback);
+  observer.observe(targetNode, config);
 };
 
 window.addEventListener ("load", main, false);
