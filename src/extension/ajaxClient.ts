@@ -1,7 +1,21 @@
-import { DOMAIN_NAME,PRIVATE_TOKEN } from './constants/environmentVariables';
+const currentURL = new URL(window.location);
+const ORIGIN = currentURL.origin;
+
+async function getPrivateToken(){
+    return new Promise((resolve,reject)=>{
+        try{
+            chrome.storage.sync.get(['gitToken'], function(items) {
+                resolve(items.gitToken);
+            });
+        }catch(e){
+            console.log(e);
+        }
+    }) 
+}
 
 async function fetchBuilder(method,path){
-    return fetch(`https://${DOMAIN_NAME}/api/v4/${path}`,
+    const PRIVATE_TOKEN = await getPrivateToken();
+    return fetch(`${ORIGIN}/api/v4/${path}`,
     {
         method,
         headers: {

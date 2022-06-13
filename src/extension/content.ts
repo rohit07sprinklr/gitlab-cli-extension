@@ -2,7 +2,7 @@ import { log } from "./log";
 
 import { fetchStream, streamBody } from "./fetchStream";
 
-import { DETAIL_PAGE_DESCRIPTION,GITLAB_CLI_DESC,GITLAB_CLI_BUTTON } from './constants/domClasses';
+import { MR_WIDGET_SECTION,GITLAB_CLI_DESC,GITLAB_CLI_BUTTON } from './constants/domClasses';
 
 import {getMergeRequestInfo,putRebaseRequest} from "./api";
 
@@ -51,7 +51,7 @@ function renderMergeButton(sourceBranch, targetBranch) {
       setContentInDesc(e);
     }
   };
-  const buttonGroup = document.querySelector(".d-flex");
+  const buttonGroup = document.querySelector(".mr-widget-section .d-flex");
   buttonGroup.appendChild(button);
 }
 
@@ -80,7 +80,7 @@ function renderRebaseButton(repoURLName, mergeRequestID) {
       setContentInDesc(e);
     }
   };
-  const buttonGroup = document.querySelector(".d-flex");
+  const buttonGroup = document.querySelector(".mr-widget-section .d-flex");
   button.style.marginLeft = "10px";
   buttonGroup.appendChild(button);
 }
@@ -96,13 +96,18 @@ function renderDescription() {
   descriptionAreaEl.style.border = "1px solid #e5e5e5";
   descriptionAreaEl.style.backgroundColor = "#fafafa";
   descriptionAreaEl.style.padding = "12px";
-
   return descriptionAreaEl;
 }
 
 function render() {
   const rootDiv = document.createElement("div");
+  rootDiv.style.display='flex';
+  rootDiv.style.flexDirection='column';
+  rootDiv.style.marginLeft='auto';
+  rootDiv.style.marginRight='auto';
+  rootDiv.style.marginTop='16px';
   rootDiv.classList.add("mr-widget-heading", "append-bottom-default");
+  rootDiv.style.border='none';
 
   const containerDiv = document.createElement("div");
   containerDiv.classList.add("mr-widget-content");
@@ -133,19 +138,40 @@ function enableButtons() {
     el.disabled = false;
   });
 }
+function wait(millis) {
+  return new Promise((res) => setTimeout(res, millis));
+}
 
-async function initialise(repoURLName,mergeRequestID,sourceBranch,targetBranch) {
+async function getIsRebaseCompleted(repoURLName,mergeRequestID){
+  while(true){
+    try{
+        const statusResponse = await getMergeRequestInfo(repoURLName,mergeRequestID);
+        if(statusResponse.rebase_in_progress==false){
+            return statusResponse;
+        }
+        await wait(5000);
+    }catch(error){
+        return error;
+    }
+  }
+}
 
-  const referenceEl = document.querySelector(DETAIL_PAGE_DESCRIPTION);
+async function initialise(repoURLName,mergeRequestID,sourceBranch,targetBranch,isRebaseInProgress) {
+  const referenceEl = document.querySelector(MR_WIDGET_SECTION);
   const el = render();
   referenceEl.classList.add("mr-widget-workflow");
-  referenceEl.parentElement.prepend(el);
+  referenceEl.prepend(el);
 
   renderMergeButton(sourceBranch,targetBranch);
   const mergeButton = document.getElementById('gitlab-cli-merge');
   disableButtons();
   mergeButton.classList.remove(GITLAB_CLI_BUTTON);
   renderRebaseButton(repoURLName, mergeRequestID);
+  if(isRebaseInProgress==true){
+    disableButtons();
+    await getIsRebaseCompleted(repoURLName,mergeRequestID);
+    enableButtons();
+  }
 
   try{
     await fetch(`http://localhost:4000/handshake?location=${window.location}`)
@@ -189,23 +215,45 @@ function getProjectInfo(pathName){
   const repoURLName = repoURLIndex.join('/');
   return { mergeRequestID: pathArray.at(midIndex+1), repoURLName};
 }
+async function renderWidget(projectInfo){
+  let retryCounter = 1;
+  while(retryCounter<=2){
+    try{
+      let res = await getMergeRequestInfo(projectInfo.repoURLName,projectInfo.mergeRequestID);
+      if(!res.isMerged){
+        initialise(projectInfo.repoURLName,projectInfo.mergeRequestID,res.sourceBranch,res.targetBranch,res.isRebaseInProgress);
+        return;
+      }
+    }catch(e){
+        console.log(e);
+    }
+    await wait(2000);
+    retryCounter+=1;
+  }
+}
 const main = () => {
   log("init");
   const pathName = window.location.pathname;
   const projectInfo = getProjectInfo(pathName);
-  const interval = setInterval(async () => {
-    try{
-      let res = await getMergeRequestInfo(projectInfo.repoURLName,projectInfo.mergeRequestID);
-      clearInterval(interval);
-      if(!res.isMerged){
-        initialise(projectInfo.repoURLName,projectInfo.mergeRequestID,res.sourceBranch,res.targetBranch);
+  
+  const targetNode = document.querySelector('.issuable-discussion');
+  const config = { childList: true, subtree: true };
+
+  const callback = function(mutationList, observer) {
+  for(const mutation of mutationList) {
+      if(mutation.target.classList.contains('mr-widget-section')){
+        log('Widget section loaded');
+        observer.disconnect();
+        renderWidget(projectInfo);
+        break;
       }
-    }catch(e){
-      console.log(e);
-    }
-  }, 1500);
+  }
+  };
+
+  const observer = new MutationObserver(callback);
+  observer.observe(targetNode, config);
 };
 
-main();
+window.addEventListener ("load", main, false);
 
 export {};

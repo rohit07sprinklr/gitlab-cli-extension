@@ -6,15 +6,16 @@ function wait(millis) {
 
 async function getMergeRequestInfo(repoURLName,mergeRequestID) {
     try{
-    const res = await ajaxClient.GET(`projects/${encodeURIComponent(repoURLName)}/merge_requests/${mergeRequestID}`);
+    const res = await ajaxClient.GET(`projects/${encodeURIComponent(repoURLName)}/merge_requests/${mergeRequestID}?include_rebase_in_progress=true`);
     const jsonResponse = await res.json();
     return {sourceBranch: jsonResponse.source_branch,
             targetBranch: jsonResponse.target_branch,
             isMerged: !(jsonResponse.state === 'opened'),
-            hasMergeConflict: jsonResponse.has_conflicts};
+            hasMergeConflict: jsonResponse.has_conflicts,
+            isRebaseInProgress: jsonResponse.rebase_in_progress};
     }
     catch(e){
-    return new Error('Cannot fetch Data for given mergeRequestID');
+    throw new Error('Cannot fetch Data for given mergeRequestID');
     }
 }
 
@@ -30,9 +31,9 @@ async function putRebaseRequest(repoURLName,mergeRequestID,setContentInDesc){
                     if(statusJSONresponse.rebase_in_progress==false){
                         return statusJSONresponse;
                     }
-                    await wait(10000);
+                    await wait(5000);
                 }catch(e){
-                    break;
+                    return e;
                 }
             }
         }
@@ -41,7 +42,7 @@ async function putRebaseRequest(repoURLName,mergeRequestID,setContentInDesc){
         }
     }
     catch(e){
-        return e;
+        throw e;
     }
 }
 
