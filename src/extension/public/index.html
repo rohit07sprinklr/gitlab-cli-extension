@@ -10,5 +10,27 @@
       <h2>GitLab API Extension</h2>
     </div>
     <hr>
+    <form class="cherry-pick-form">
+      <div class="row mb-1">
+        <label for="commitAuthor" class="col-sm-1 col-form-label">Author</label>
+        <div class="col-sm-1">
+          <input type="text" class="form-control" id="commitAuthor" name="commitAuthor">
+        </div>
+        </div>
+        <div class="row mb-1">
+        <label for="commitBranch" class="col-sm-1 col-form-label">Branch</label>
+        <div class="col-sm-1">
+          <input type="text" class="form-control" id="commitBranch" name="commitBranch">
+        </div>
+        </div>
+        <div class="row mb-1">
+        <label for="commitTime" class="col-sm-1 col-form-label">Time since commit:</label>
+        <div class="col-sm-1">
+          <input type="datetime-local" class="form-control" id="commitTime" name="commitTime">
+        </div>
+        </div>  
+        <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+    </form>
+    <div id="cherry-pick-desc"></div>
   </body>
 </html>

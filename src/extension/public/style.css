@@ -41,6 +41,11 @@ body{
   }
   #cherry-pick-desc{
     display: none;
-    padding: 10px;
-    border: 1px solid red;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #e5e5e5;
+    background-color: #fafafa;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 15px;
   }
