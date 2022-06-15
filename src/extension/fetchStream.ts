@@ -19,7 +19,7 @@ function streamBody(body, onChunkReceive) {
             // Enqueue the next data chunk into our target stream
             controller.enqueue(value);
             const chunkString = decoder.decode(value, { stream: true });
-            if (chunkString === "ERROR") {
+            if (chunkString.toLowerCase().startsWith('error')) {
               throw Error(chunkString);
               return;
             }
@@ -35,7 +35,7 @@ function streamBody(body, onChunkReceive) {
     .then((rs) => new Response(rs))
     .then((response) => response.text())
     .catch((e)=>{
-      throw new Error(`Automatic merge failed; fix conflicts and then commit the result.`);
+      throw e;
     });
 }
 
