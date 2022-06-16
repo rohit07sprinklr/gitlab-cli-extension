@@ -43,7 +43,7 @@ async function mergeProcess(req,res){
     console.log("start merge");
     console.log(`fetching ${source}`);
     res.write(`fetching ${source}`);
-    await wait(100);
+    
     console.log(`fetching ${target}`);
     res.write(`fetching ${target}`);
     await git(path).fetch("origin", target);
@@ -86,7 +86,27 @@ async function mergeProcess(req,res){
     res.end();
   }
 }
-
+async function cherryPickCommit(gitLogs,path,res){
+  for(const gitLog of gitLogs){
+    const commitInfo = gitLog.split(" ");
+    console.log(`Working on ${commitInfo[0]}`);
+    res.write(`Working on ${commitInfo[0]}: `);
+    try{
+      const cherryPickResult = await git(path).raw(["cherry-pick", "-m", "1", `${commitInfo[0]}`]);
+      console.log(cherryPickResult);
+      await wait(500);
+      console.log('Success');
+      res.write(`Success !`);
+    }
+    catch(e){
+      await wait(500);
+      console.log('Success');
+      res.write(`Failed !`);
+      console.log(e);
+    }
+    await wait(500);
+  } 
+}
 async function cherryPickProcess(req,res){
   try {
     const { commitAuthor, commitBranch, commitTime, location } = req.body;
@@ -94,18 +114,14 @@ async function cherryPickProcess(req,res){
     const commitTimeFormatted= commitTime.replace("T"," ");
     await wait(100);
     await git(path).checkout(commitBranch);
-    const resp = await git(path).raw(['log',"--pretty=format:%h - %an, %ad : %s",'--author',`${commitAuthor}`, '--merges','--since',`${commitTimeFormatted}`]);
-    const result=resp.split('\n');
+    await git(path).raw("reset", "--hard", `origin/${commitBranch}`);
+    const resp = await git(path).raw(["log", "--pretty=format:%h - %an, %ad : %s", "--author", `${commitAuthor}`, "--remotes", "--merges", "--since", `${commitTimeFormatted}`]);
+    const result = resp.split("\n");
     console.log(result);
-    result.forEach(async (element)=>{
-      const gitLogs = element.split(" ");
-      console.log(gitLogs[0]);
-      const cherryPickResult = await git(path).raw(["cherry-pick", "-m", "1", `${gitLogs[0]}`]);
-      console.log(cherryPickResult);
-    })
-    await git(path).push("origin", commitBranch);
+    await cherryPickCommit(result.reverse(),path,res);
+    // await git(path).push("origin", commitBranch);
     res.end();
-    } catch (e) {
+  } catch (e) {
     res.end();
   }
 }

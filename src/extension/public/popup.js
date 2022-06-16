@@ -19,9 +19,9 @@ function streamBody(body, onChunkReceive) {
               // Enqueue the next data chunk into our target stream
               controller.enqueue(value);
               const chunkString = decoder.decode(value, { stream: true });
-              if (chunkString === "ERROR") {
+              if (chunkString.toLowerCase().startsWith('error')) {
+                onChunkReceive(chunkString);
                 throw Error(chunkString);
-                return;
               }
               onChunkReceive(chunkString);
             }
@@ -34,9 +34,6 @@ function streamBody(body, onChunkReceive) {
       })
       .then((rs) => new Response(rs))
       .then((response) => response.text())
-      .catch((e)=>{
-        throw e;
-      });
   }
   
   function fetchStream(url, payload, onChunkReceive) {
@@ -55,8 +52,10 @@ function streamBody(body, onChunkReceive) {
           });
         }
         return r.body;
-      })
-      .then((body) => streamBody(body, onChunkReceive));
+      }).catch(e=>{
+        onChunkReceive(e);
+        throw e;
+      }).then((body) => streamBody(body, onChunkReceive));
   }
 
   function setContentInDesc(content) {
@@ -91,9 +90,11 @@ cherryPickForm.addEventListener('submit',async(e)=>{
             setContentInDesc(chunkString);
           }
         ).then((res) => {
-          // window.location.reload();
+          const responseArray = res.replaceAll('!',`\n`);
+          setContentInDesc(responseArray);
         });
-      } catch (e) {
-        setContentInDesc(e);
+      }catch(e){
+
       }
-})
+    }
+)
