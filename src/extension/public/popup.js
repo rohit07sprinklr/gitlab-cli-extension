@@ -65,12 +65,25 @@ function streamBody(body, onChunkReceive) {
     el.textContent = content;
   }
 
+  async function getCurrentTab() {
+    const queryOptions = { active: true, lastFocusedWindow: true };
+    const [tab] = await chrome.tabs.query(queryOptions);
+    return tab;
+}
+document.addEventListener('DOMContentLoaded',async ()=>{
+  const currentTab = await getCurrentTab();
+  if(currentTab.url.indexOf('gitlab') > -1){
+      document.body.style.display='block';
+  }
+});
 const cherryPickForm = document.querySelector('.cherry-pick-form');
 cherryPickForm.addEventListener('submit',async(e)=>{
     e.preventDefault();
+    const currentTab = await getCurrentTab();
     const formData = new FormData(e.target);
     const jsonFormdata = {};
     formData.forEach((value, key) => (jsonFormdata[key] = value));
+    jsonFormdata['location'] = currentTab.url;
     try {
         await fetchStream(
           `http://localhost:4000/cherrypick`,jsonFormdata ,

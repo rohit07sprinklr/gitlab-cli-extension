@@ -43,8 +43,7 @@ async function mergeProcess(req,res){
     console.log("start merge");
     console.log(`fetching ${source}`);
     res.write(`fetching ${source}`);
-    await git(path).fetch("origin", source);
-
+    await wait(100);
     console.log(`fetching ${target}`);
     res.write(`fetching ${target}`);
     await git(path).fetch("origin", target);
@@ -88,6 +87,29 @@ async function mergeProcess(req,res){
   }
 }
 
+async function cherryPickProcess(req,res){
+  try {
+    const { commitAuthor, commitBranch, commitTime, location } = req.body;
+    const path = config.repos.find((repo) => location.startsWith(repo.url)).path;
+    const commitTimeFormatted= commitTime.replace("T"," ");
+    await wait(100);
+    await git(path).checkout(commitBranch);
+    const resp = await git(path).raw(['log',"--pretty=format:%h - %an, %ad : %s",'--author',`${commitAuthor}`, '--merges','--since',`${commitTimeFormatted}`]);
+    const result=resp.split('\n');
+    console.log(result);
+    result.forEach(async (element)=>{
+      const gitLogs = element.split(" ");
+      console.log(gitLogs[0]);
+      const cherryPickResult = await git(path).raw(["cherry-pick", "-m", "1", `${gitLogs[0]}`]);
+      console.log(cherryPickResult);
+    })
+    await git(path).push("origin", commitBranch);
+    res.end();
+    } catch (e) {
+    res.end();
+  }
+}
+
 app.get("/handshake", async function (req, res, next) {
   const { location } = req.query;
   if (config.repos.some((repo) => location.startsWith(repo.url))) {
@@ -117,11 +139,7 @@ app.post("/cherrypick", async function (req, res, next) {
     "Transfer-Encoding": "chunked",
     "access-control-allow-origin": "*",
   });
-  res.write(`${req.body.commitAuthor}`);
-  await wait(1000);
-  res.write(`${req.body.commitBranch}`);
-  await wait(1000);
-  res.write(`${req.body.commitTime}`);
+  queue.add(async () => await cherryPickProcess(req,res));
 });
 
 app.listen(PORT, () => {
