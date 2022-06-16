@@ -74,7 +74,7 @@ async function mergeProcess(req,res){
     console.log("end merge successfully");
     res.end();
   } catch (e) {
-    res.write(`ERROR`);
+    res.write(`${e.toString()}`);
     console.error(e);
     console.log("End merge failure");
     res.end();
