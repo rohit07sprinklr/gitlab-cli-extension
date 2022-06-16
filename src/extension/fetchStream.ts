@@ -20,8 +20,8 @@ function streamBody(body, onChunkReceive) {
             controller.enqueue(value);
             const chunkString = decoder.decode(value, { stream: true });
             if (chunkString.toLowerCase().startsWith('error')) {
+              onChunkReceive(chunkString);
               throw Error(chunkString);
-              return;
             }
             onChunkReceive(chunkString);
           }
@@ -34,9 +34,6 @@ function streamBody(body, onChunkReceive) {
     })
     .then((rs) => new Response(rs))
     .then((response) => response.text())
-    .catch((e)=>{
-      throw e;
-    });
 }
 
 function fetchStream(url, onChunkReceive) {
@@ -48,6 +45,9 @@ function fetchStream(url, onChunkReceive) {
         });
       }
       return r.body;
+    }).catch(e=>{
+      onChunkReceive(e);
+      throw e;
     })
     .then((body) => streamBody(body, onChunkReceive));
 }

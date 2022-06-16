@@ -4,7 +4,7 @@ import { fetchStream, streamBody } from "./fetchStream";
 
 import { MR_WIDGET_SECTION,GITLAB_CLI_DESC,GITLAB_CLI_BUTTON } from './constants/domClasses';
 
-import {getMergeRequestInfo,putRebaseRequest} from "./api";
+import {getMergeRequestInfo} from "./api";
 
 function renderButton() {
   const button = document.createElement("button");
@@ -48,7 +48,6 @@ function renderMergeButton(sourceBranch, targetBranch) {
     } catch (e) {
       enableButtons();
       button.textContent = "Retry Merge";
-      setContentInDesc(e);
     }
   };
   const buttonGroup = document.querySelector(".mr-widget-section .d-flex");
