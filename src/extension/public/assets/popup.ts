@@ -1,8 +1,5 @@
-async function getCurrentTab() {
-  const queryOptions = { active: true, lastFocusedWindow: true };
-  const [tab] = await chrome.tabs.query(queryOptions);
-  return tab;
-}
+import { getCurrentTab } from "../../utils";
+
 document
   .getElementById("btn-cherry-pick")
   .addEventListener("click", async () => {
