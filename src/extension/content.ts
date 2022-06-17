@@ -37,6 +37,8 @@ function renderMergeButton(sourceBranch, targetBranch) {
         }&source=${encodeURIComponent(
           sourceBranch!
         )}&target=${encodeURIComponent(targetBranch!)}`,
+        "GET",
+        null,
         (chunkString) => {
           button.textContent = "Merging";
           setContentInDesc(chunkString);

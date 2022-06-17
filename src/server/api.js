@@ -88,7 +88,7 @@ async function mergeProcess(req,res){
   }
 }
 
-app.get("/handshake", async function (req, res, next) {
+app.get("/handshake", async function (req, res) {
   const { location } = req.query;
   if (config.repos.some((repo) => location.startsWith(repo.url))) {
     res.writeHead(200, {
@@ -101,7 +101,7 @@ app.get("/handshake", async function (req, res, next) {
     }).end();
 });
 
-app.get("/merge", async function (req, res, next) {
+app.get("/merge", async function (req, res) {
   res.writeHead(200, {
     "Content-Type": "text/plain",
     "Transfer-Encoding": "chunked",
@@ -111,7 +111,7 @@ app.get("/merge", async function (req, res, next) {
   queue.add(async () => await mergeProcess(req,res));
 });
 
-app.post("/cherrypick", async function (req, res, next) {
+app.post("/cherrypick", async function (req, res) {
   res.writeHead(200, {
     "Content-Type": "text/plain",
     "Transfer-Encoding": "chunked",

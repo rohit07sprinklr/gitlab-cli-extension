@@ -7,6 +7,11 @@ Promise.all([
     outfile: "dist/extension/content.js",
   }),
   esbuild.build({
+    entryPoints: ["src/extension/public/assets/popup.ts"],
+    bundle: true,
+    outfile: "dist/extension/assets/popup.js",
+  }),
+  esbuild.build({
     entryPoints: ["src/server/api.js"],
     bundle: true,
     outfile: "dist/server/api.js",
