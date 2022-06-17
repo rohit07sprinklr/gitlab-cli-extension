@@ -50,7 +50,6 @@ function renderMergeButton(sourceBranch, targetBranch) {
     } catch (e) {
       enableButtons();
       button.textContent = "Retry Merge";
-      setContentInDesc(e);
     }
   };
   const buttonGroup = document.querySelector(".mr-widget-section .d-flex");

@@ -58,6 +58,9 @@ function fetchStream(url, method, payload, onChunkReceive) {
         });
       }
       return r.body;
+    }).catch(e=>{
+      onChunkReceive(e);
+      throw e;
     })
     .catch((e) => {
       onChunkReceive(e);
