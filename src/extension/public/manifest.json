@@ -12,12 +12,6 @@
       "js": [
         "./content.js"
       ]
-    },
-    {
-      "matches": ["https://*/-/*/personal_access_tokens","https://*/-/*/personal_access_tokens?*"],
-      "js": [
-        "./token.js"
-      ]
     }
   ],  
   "action": {

@@ -37,6 +37,8 @@ function renderMergeButton(sourceBranch, targetBranch) {
         }&source=${encodeURIComponent(
           sourceBranch!
         )}&target=${encodeURIComponent(targetBranch!)}`,
+        "GET",
+        null,
         (chunkString) => {
           button.textContent = "Merging";
           setContentInDesc(chunkString);
@@ -55,35 +57,6 @@ function renderMergeButton(sourceBranch, targetBranch) {
   buttonGroup.appendChild(button);
 }
 
-function renderRebaseButton(repoURLName, mergeRequestID) {
-  const button = renderButton();
-  button.textContent = "Rebase";
-  button.id = "gitlab-cli-rebase";
-  button.onclick = async () => {
-    disableButtons();
-    try{
-      button.textContent = "Rebasing";
-      setContentInDesc(`Requesting the Gitlab API`);
-      const res = await putRebaseRequest(repoURLName,mergeRequestID,setContentInDesc);
-      if(res.merge_error==null){
-          setContentInDesc(`Rebase Successful!`);
-          button.textContent = "Rebased";
-          window.location.reload();
-      }
-      else{
-          throw new Error(`${res.merge_error}`);
-      }
-    }
-    catch(e){
-      enableButtons();
-      button.textContent = "Retry Rebase";
-      setContentInDesc(e);
-    }
-  };
-  const buttonGroup = document.querySelector(".mr-widget-section .d-flex");
-  button.style.marginLeft = "10px";
-  buttonGroup.appendChild(button);
-}
 
 function renderDescription() {
   const descriptionAreaEl = document.createElement("p");
@@ -142,20 +115,6 @@ function wait(millis) {
   return new Promise((res) => setTimeout(res, millis));
 }
 
-async function getIsRebaseCompleted(repoURLName,mergeRequestID){
-  while(true){
-    try{
-        const statusResponse = await getMergeRequestInfo(repoURLName,mergeRequestID);
-        if(statusResponse.rebase_in_progress==false){
-            return statusResponse;
-        }
-        await wait(5000);
-    }catch(error){
-        return error;
-    }
-  }
-}
-
 async function initialise(repoURLName,mergeRequestID,sourceBranch,targetBranch,isRebaseInProgress) {
   const referenceEl = document.querySelector(MR_WIDGET_SECTION);
   const el = render();
@@ -166,13 +125,6 @@ async function initialise(repoURLName,mergeRequestID,sourceBranch,targetBranch,i
   const mergeButton = document.getElementById('gitlab-cli-merge');
   disableButtons();
   mergeButton.classList.remove(GITLAB_CLI_BUTTON);
-  renderRebaseButton(repoURLName, mergeRequestID);
-  if(isRebaseInProgress==true){
-    disableButtons();
-    await getIsRebaseCompleted(repoURLName,mergeRequestID);
-    enableButtons();
-  }
-
   try{
     await fetch(`http://localhost:4000/handshake?location=${window.location}`)
     .then((r) => {
@@ -202,7 +154,7 @@ async function initialise(repoURLName,mergeRequestID,sourceBranch,targetBranch,i
     });
   }catch{
     console.log('Server not initialised!');
-    setContentInDesc(`Server not initialised, Merge via CLI Disabled, Rebase Enabled!`);
+    setContentInDesc(`Server not initialised`);
   }
 }
 
@@ -235,7 +187,11 @@ const main = () => {
   log("init");
   const pathName = window.location.pathname;
   const projectInfo = getProjectInfo(pathName);
-  
+  const sectionContainer = document.querySelector('.mr-section-container');
+  if(sectionContainer!=null){
+    renderWidget(projectInfo);
+    return;
+  }
   const targetNode = document.querySelector('.issuable-discussion');
   const config = { childList: true, subtree: true };
 
@@ -254,6 +210,6 @@ const main = () => {
   observer.observe(targetNode, config);
 };
 
-window.addEventListener ("load", main, false);
+main();
 
 export {};
