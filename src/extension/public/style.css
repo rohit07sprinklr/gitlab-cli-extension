@@ -39,26 +39,13 @@ body{
     margin: 5px;
     text-align: center;
   }
-  .status-success-handler{
+  #cherry-pick-desc{
     display: none;
-    margin-bottom: 10px;
-    color: green;
-  }
-  .status-error-handler{
-    display: none;
-    margin-bottom: 10px;
-    color: red;
-  }
-  .generate-cli-token{
-    padding: 0px;
-    font-size: 17px;
-    text-decoration: underline;
-    color: rgb(75, 75, 75);
-    background-color: white;
-    border: none;
-    display: none;
-  }
-  .generate-cli-token:hover{
-    cursor:pointer;
-    color: rgb(7, 3, 143);
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #e5e5e5;
+    background-color: #fafafa;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 15px;
   }

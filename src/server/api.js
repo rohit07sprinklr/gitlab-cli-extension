@@ -3,6 +3,8 @@
 const express = require("express");
 const git = require("simple-git");
 const fs = require("fs");
+const bodyParser = require('body-parser');
+const cors = require('cors');
 let config;
 
 try {
@@ -16,6 +18,11 @@ const queue = new PQueue({concurrency: 1});
 
 const PORT = 4000;
 const app = express();
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({
+    extended: true
+  }));
+app.use(cors());
 
 let count = 0;
 queue.on('active', () => {
@@ -102,6 +109,19 @@ app.get("/merge", async function (req, res) {
   });
   res.write(`Merge Queued `);
   queue.add(async () => await mergeProcess(req,res));
+});
+
+app.post("/cherrypick", async function (req, res) {
+  res.writeHead(200, {
+    "Content-Type": "text/plain",
+    "Transfer-Encoding": "chunked",
+    "access-control-allow-origin": "*",
+  });
+  res.write(`${req.body.commitAuthor}`);
+  await wait(1000);
+  res.write(`${req.body.commitBranch}`);
+  await wait(1000);
+  res.write(`${req.body.commitTime}`);
 });
 
 app.listen(PORT, () => {

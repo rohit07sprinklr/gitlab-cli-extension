@@ -35,9 +35,22 @@ function streamBody(body, onChunkReceive) {
     .then((rs) => new Response(rs))
     .then((response) => response.text())
 }
-
-function fetchStream(url, onChunkReceive) {
-  return fetch(url)
+function fetchBuilder(url, method, payload) {
+  if (method === "GET") {
+    return fetch(url);
+  } else if (method === "POST") {
+    return fetch(url, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  }
+}
+function fetchStream(url, method, payload, onChunkReceive) {
+  return fetchBuilder(url, method, payload)
     .then((r) => {
       if (r.status >= 400) {
         return r.text().then((text) => {
@@ -46,6 +59,10 @@ function fetchStream(url, onChunkReceive) {
       }
       return r.body;
     }).catch(e=>{
+      onChunkReceive(e);
+      throw e;
+    })
+    .catch((e) => {
       onChunkReceive(e);
       throw e;
     })
