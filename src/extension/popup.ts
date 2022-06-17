@@ -1,4 +1,4 @@
-import { getCurrentTab } from "../../utils";
+import { getCurrentTab } from "./utils";
 
 document
   .getElementById("btn-cherry-pick")

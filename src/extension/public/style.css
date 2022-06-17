@@ -33,6 +33,8 @@ h2 {
 }
 #cherry-pick-desc {
   display: none;
+  margin: auto;
+  width: 70%;
   padding: 8px;
   margin-top: 5px;
   border: 1px solid #e5e5e5;

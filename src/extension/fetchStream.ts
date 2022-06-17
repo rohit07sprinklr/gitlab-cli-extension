@@ -19,7 +19,7 @@ function streamBody(body, onChunkReceive) {
             // Enqueue the next data chunk into our target stream
             controller.enqueue(value);
             const chunkString = decoder.decode(value, { stream: true });
-            if (chunkString.toLowerCase().startsWith("error")) {
+            if (chunkString.toLowerCase().includes("error")) {
               onChunkReceive(chunkString);
               throw Error(chunkString);
             }
