@@ -2,6 +2,49 @@ import { fetchStream, streamBody } from "./fetchStream";
 
 import { getCurrentTab } from "./utils";
 
+async function cherryPickRequest(jsonFormdata) {
+  disableButton();
+  try {
+    await fetchStream(
+      `http://localhost:4000/cherrypick`,
+      "POST",
+      jsonFormdata,
+      (chunkString) => {
+        if (chunkString.toLowerCase().startsWith("paused")) {
+          const currentCommitId = Number(
+            chunkString.slice(chunkString.indexOf("{") + 1, -1)
+          );
+          if (currentCommitId > jsonFormdata.commits.length) {
+            return;
+          }
+          let jsonFormdataNew = jsonFormdata;
+          jsonFormdataNew.commits =
+            jsonFormdataNew.commits.slice(currentCommitId);
+          const form = document.querySelector(".commit-form");
+          const continueButton = document.createElement("button");
+
+          continueButton.classList.add("btn", "btn-primary", "btn-continue");
+          continueButton.innerText = "Continue";
+          continueButton.style.marginLeft = "10px";
+
+          continueButton.addEventListener("click", async () => {
+            form.removeChild(continueButton);
+            cherryPickRequest(jsonFormdata);
+          });
+          form.appendChild(continueButton);
+        } else {
+          setContentInDesc(chunkString);
+        }
+      }
+    ).then((res) => {
+      if (!document.querySelector(".btn-continue")) {
+        enableButton();
+      }
+    });
+  } catch (e) {
+    enableButton();
+  }
+}
 async function cherryPickCommits(path, commitBranch, targetBranch) {
   const table = document.querySelector(".table");
   const jsonFormdata = {};
@@ -9,6 +52,7 @@ async function cherryPickCommits(path, commitBranch, targetBranch) {
   jsonFormdata.localPath = path;
   jsonFormdata.commitBranch = commitBranch;
   jsonFormdata.targetBranch = targetBranch;
+
   Array.from(table.rows).forEach((element, rowNumber) => {
     if (rowNumber > 0) {
       jsonFormdata.commits.push({
@@ -18,23 +62,9 @@ async function cherryPickCommits(path, commitBranch, targetBranch) {
       });
     }
   });
-  disableButton();
-  try {
-    await fetchStream(
-      `http://localhost:4000/cherrypick`,
-      "POST",
-      jsonFormdata,
-      (chunkString) => {
-        setContentInDesc(chunkString);
-      }
-    ).then((res) => {
-      enableButton();
-      setContentInDesc(res);
-    });
-  } catch (e) {
-    enableButton();
-  }
+  cherryPickRequest(jsonFormdata);
 }
+
 function setContentInDesc(content) {
   const el = document.getElementById("cherry-pick-desc");
   el.style.display = "block";
@@ -76,16 +106,20 @@ function renderForm(commits, path, commitBranch, targetBranch) {
   }
   const form = document.createElement("form");
   form.classList.add("commit-form");
+
   const tableDiv = document.createElement("div");
   tableDiv.style.height = "350px";
   tableDiv.style.overflowY = "scroll";
   form.appendChild(tableDiv);
+
   const table = document.createElement("table");
   table.classList.add("table");
   tableDiv.appendChild(table);
+
   const tableHead = document.createElement("thead");
   table.appendChild(tableHead);
   addFormHeader(tableHead);
+
   const tableBody = document.createElement("tbody");
   table.appendChild(tableBody);
   commits.forEach((commit) => {
@@ -94,11 +128,13 @@ function renderForm(commits, path, commitBranch, targetBranch) {
     tableBody.append(tableRow);
     tableRow.innerHTML = renderFormElement(commit);
   });
+
   const cherryPickButton = document.createElement("button");
   cherryPickButton.classList.add("btn", "btn-primary", "btn-cherry-pick");
   cherryPickButton.setAttribute("type", "submit");
   cherryPickButton.innerText = "Cherry Pick";
   form.appendChild(cherryPickButton);
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     await cherryPickCommits(path, commitBranch, targetBranch);

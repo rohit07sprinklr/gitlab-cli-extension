@@ -4,34 +4,6 @@ function wait(millis) {
   return new Promise((res) => setTimeout(res, millis));
 }
 
-async function cherryPickCommit(gitLogs, path, res) {
-  for (const gitLog of gitLogs) {
-    if (gitLog.commitScope == false) {
-      res.write(`Skipped Commit-${gitLog.commitID} (${gitLog.commitSHA})`);
-      await wait(1000);
-      continue;
-    }
-    res.write(`Working on Commit-${gitLog.commitID} (${gitLog.commitSHA})`);
-    try {
-      const cherryPickResult = await git(path).raw([
-        "cherry-pick",
-        "-m",
-        "1",
-        `${gitLog.commitSHA}`,
-      ]);
-      console.log(cherryPickResult);
-      await wait(500);
-      console.log("Success");
-      res.write(`Success\n`);
-    } catch (e) {
-      await wait(500);
-      console.log("Failed");
-      res.write(`${e.toString()}\n`);
-      console.log(e);
-    }
-    await wait(500);
-  }
-}
 async function cherryPickProcess(req, res) {
   try {
     const path = req.body.localPath;
@@ -60,9 +32,39 @@ async function cherryPickProcess(req, res) {
         await git(path).checkoutBranch(`${commitBranch}`, `${targetBranch}`);
       }
     }
-
-    await cherryPickCommit(req.body.commits, path, res);
+    const gitLogs = req.body.commits;
+    let currentCommitIndex = 0;
+    try {
+      for (const gitLog of gitLogs) {
+        currentCommitIndex += 1;
+        if (gitLog.commitScope == false) {
+          continue;
+        }
+        res.write(`Cherry pick ${gitLog.commitSHA}`);
+        const cherryPickResult = await git(path).raw([
+          "cherry-pick",
+          "-m",
+          "1",
+          `${gitLog.commitSHA}`,
+        ]);
+        await wait(500);
+        console.log(`Cherry-pick ${gitLog.commitSHA} Successful`);
+        console.log(cherryPickResult);
+        res.write(`Cherry-pick ${gitLog.commitSHA} Successful`);
+        await wait(500);
+      }
+    } catch (e) {
+      await git(path).raw("reset", "--hard");
+      console.log("Failed");
+      res.write(`Cherry-pick paused - ${e.toString()}`);
+      await wait(100);
+      res.write(`Paused {${currentCommitIndex}}`);
+      res.end();
+      console.log(e);
+      return;
+    }
     //git push --set-upstream origin feature/cherry-pick
+    res.write("Cherry Pick Completed");
     res.end();
   } catch (e) {
     res.write(`${e.toString()}`);

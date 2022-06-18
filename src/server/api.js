@@ -29,15 +29,6 @@ app.use(
 );
 app.use(cors());
 
-let count = 0;
-queue.on("active", () => {
-  console.log(`Working on Request #${++count}`);
-});
-
-function wait(millis) {
-  return new Promise((res) => setTimeout(res, millis));
-}
-
 app.get("/handshake", async function (req, res) {
   const { location } = req.query;
   if (config.repos.some((repo) => location.startsWith(repo.url))) {
