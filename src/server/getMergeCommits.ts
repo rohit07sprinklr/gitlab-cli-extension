@@ -2,10 +2,21 @@ const git = require("simple-git");
 
 async function getMergeCommits(req, res, config) {
   try {
+    if(!config.repos || config.repos.length===0){
+      console.log(`ERROR: URL Not Found`);
+      res.end(JSON.stringify({"ERROR":"URL Not Found"}));
+      return;
+    }
     const { commitAuthor, commitBranch, commitTime, location } = req.body;
-    const path = config.repos.find((repo) =>
+    const matchedRepo = config.repos.find((repo) =>
       location.startsWith(repo.url)
-    ).path;
+    )
+    if(!matchedRepo){
+      console.log(`ERROR: URL Not Found`);
+      res.end(JSON.stringify({"ERROR":"URL Not Found"}));
+      return;
+    }
+    const path = matchedRepo.path;
     const commitTimeFormatted = commitTime.replace("T", " ");
     const resp = await git(path).raw([
       "log",

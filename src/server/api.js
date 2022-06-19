@@ -5,14 +5,8 @@ const git = require("simple-git");
 const fs = require("fs");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-let config;
+const path = require("path");
 
-try {
-  config = JSON.parse(fs.readFileSync("./config.json", "utf-8"));
-} catch (e) {
-  console.error("missing config.json");
-  process.exit(1);
-}
 import { mergeProcess } from "./merge";
 import { getMergeCommits } from "./getMergeCommits";
 import { cherryPickProcess } from "./cherryPick";
@@ -32,28 +26,48 @@ app.use(cors());
 
 app.get("/handshake", async function (req, res) {
   const { location } = req.query;
-  if (config.repos.some((repo) => location.startsWith(repo.url))) {
+  const configPath = path.join(__dirname, "config.json");
+  fs.readFile(configPath, function (err, data) {
+    if (err) {
+      console.log(`ERROR: Config file missing`);
+      res.writeHead(400, {
+        "Content-Type": "application/json",
+        "access-control-allow-origin": "*",
+      });
+      res.end(JSON.stringify({ ERROR: "Config file missing" }));
+      return;
+    }
+    const config = JSON.parse(data);
+    if (
+      !config.repos ||
+      config.repos.length === 0 ||
+      !config.repos.some((repo) => location.startsWith(repo.url))
+    ) {
+      res.writeHead(400, {
+        "Content-Type": "application/json",
+        "access-control-allow-origin": "*",
+      });
+      console.log(`ERROR: URL Not Found`);
+      res.end(JSON.stringify({ ERROR: "URL Not Found" }));
+      return;
+    }
     res
       .writeHead(200, {
         "access-control-allow-origin": "*",
       })
       .end();
     return;
-  }
-  res
-    .writeHead(500, {
-      "access-control-allow-origin": "*",
-    })
-    .end();
+  });
 });
+
 app.get("/profiles", async function (req, res) {
-  await getProfiles(req, res);
+  await getProfiles(res);
 });
 app.post("/profiles", async function (req, res) {
-  await addProfile(req, res);
+  await addProfile(req.body, res);
 });
 app.delete("/profiles", async function (req, res) {
-  await deleteProfile(req, res);
+  await deleteProfile(req.body.id, res);
 });
 
 app.get("/merge", async function (req, res) {
@@ -63,8 +77,16 @@ app.get("/merge", async function (req, res) {
     "access-control-allow-origin": "*",
   });
   res.write(`Merge Queued `);
-  console.log(req.query);
-  queue.add(async () => await mergeProcess(req, res, config));
+  const configPath = path.join(__dirname, "config.json");
+  fs.readFile(configPath, function (err, data) {
+    if (err) {
+      console.log(`ERROR: Config file missing`);
+      res.end("ERROR Config file missing");
+      return;
+    }
+    const jsonData = JSON.parse(data);
+    queue.add(async () => await mergeProcess(req, res, jsonData));
+  });
 });
 
 app.post("/cherrypick", async function (req, res) {
@@ -81,7 +103,16 @@ app.post("/mergecommits", async function (req, res) {
     "Content-Type": "application/json",
     "access-control-allow-origin": "*",
   });
-  getMergeCommits(req, res, config);
+  const configPath = path.join(__dirname, "config.json");
+  fs.readFile(configPath, function (err, data) {
+    if (err) {
+      console.log(`ERROR: Config file missing`);
+      res.end(JSON.stringify({ ERROR: "Config file missing" }));
+      return;
+    }
+    const jsonData = JSON.parse(data);
+    getMergeCommits(req, res, jsonData);
+  });
 });
 
 app.listen(PORT, () => {

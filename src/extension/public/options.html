@@ -14,28 +14,34 @@
     <div class="app-header">
       <h2>GitLab CLI Extension</h2>
     </div>
-    <form class="cherry-pick-form">
+    <form class="add-profile-form">
       <div class="form-group row">
         <div class="form-group col-md-6">
-          <label for="repoURL">Repository URL</label>
+          <label for="url">Repository URL</label>
           <input
             type="text"
             class="form-control"
-            id="repoURL"
-            name="repoURL"
+            id="url"
+            name="url"
+            required
           />
         </div>
         <div class="form-group col-md-6">
-          <label for="localPath">Local Path</label>
+          <label for="path">Local Path</label>
           <input
             type="text"
             class="form-control"
-            id="localPath"
-            name="localPath"
+            id="path"
+            name="path"
+            required
           />
         </div>
       </div>
       <button type="submit" class="btn btn-primary">Add</button>
+      <button type="button" class="btn btn-primary btn-show-profile">
+        Show All Profiles
+      </button>
     </form>
+    <div id="options-desc"></div>
   </body>
 </html>

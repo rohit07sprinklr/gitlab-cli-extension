@@ -1,10 +1,9 @@
 const fs = require("fs");
 const path = require("path");
 
-async function getProfiles(req, res) {
+async function getProfiles(res) {
   const configPath = path.join(__dirname, "config.json");
   fs.readFile(configPath, function (err, data) {
-    const configPath = path.join(__dirname, "config.json");
     if (err) {
       res.status(400).send(err);
       return;
@@ -14,7 +13,7 @@ async function getProfiles(req, res) {
   });
 }
 
-async function addProfile(req, res) {
+async function addProfile(profileData, res) {
   const configPath = path.join(__dirname, "config.json");
   let jsonData;
   fs.readFile(configPath, function (err, data) {
@@ -24,7 +23,7 @@ async function addProfile(req, res) {
     } else {
       jsonData = JSON.parse(data);
     }
-    jsonData.repos.push(req.body);
+    jsonData.repos.push(profileData);
     fs.writeFile(
       configPath,
       JSON.stringify(jsonData),
@@ -43,7 +42,7 @@ async function addProfile(req, res) {
   });
 }
 
-async function deleteProfile(req, res) {
+async function deleteProfile(profileID, res) {
   const configPath = path.join(__dirname, "config.json");
   fs.readFile(configPath, function (err, data) {
     if (err) {
@@ -51,8 +50,8 @@ async function deleteProfile(req, res) {
       return;
     }
     const jsonData = JSON.parse(data);
-    if (req.body.id > -1) {
-      jsonData.repos.splice(req.body.id, 1);
+    if (profileID > -1) {
+      jsonData.repos.splice(profileID, 1);
     }
     fs.writeFile(
       configPath,

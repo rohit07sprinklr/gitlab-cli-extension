@@ -152,6 +152,10 @@ const main = () => {
     formData.forEach((value, key) => (jsonFormdata[key] = value));
     const currentURL = new URL(currentTab.url).search.split("=")[1];
     jsonFormdata["location"] = `${currentURL}`;
+    const commitForm = document.querySelector(".commit-form");
+      if (commitForm != null) {
+        document.body.removeChild(commitForm);
+      }
     try {
       const res = await fetch(`http://localhost:4000/mergecommits`, {
         method: "POST",
@@ -162,9 +166,8 @@ const main = () => {
         body: JSON.stringify(jsonFormdata),
       });
       const jsonResult = await res.json();
-      const commitForm = document.querySelector(".commit-form");
-      if (commitForm != null) {
-        document.body.removeChild(commitForm);
+      if(jsonResult['ERROR']){
+        throw new Error(jsonResult['ERROR']);
       }
       renderForm(
         jsonResult.commits,

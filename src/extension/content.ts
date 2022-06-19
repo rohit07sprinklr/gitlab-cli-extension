@@ -135,34 +135,24 @@ async function initialise(
   try {
     await fetch(
       `http://localhost:4000/handshake?location=${window.location}`
-    ).then((r) => {
+    ).then(async (r) => {
       if (r.status === 200) {
         const mergeButton = document.getElementById("gitlab-cli-merge");
         mergeButton.classList.add(GITLAB_CLI_BUTTON);
         enableButtons();
         return true;
       }
-      if (r.status === 500) {
-        return false;
-      }
-      if (r.status === 512) {
-        const descEl = document.getElementById(GITLAB_CLI_DESC);
-        setContentInDesc("CLI busy");
-        streamBody(r.body, (chunkString) => {
-          descEl.textContent = chunkString;
-        }).then(() => {
-          clearContentInDesc();
-          const mergeButton = document.getElementById("gitlab-cli-merge");
-          mergeButton.classList.add(GITLAB_CLI_BUTTON);
-          enableButtons();
-        });
-        return false;
+      if (r.status === 400) {
+        const jsonResult = await r.json();
+        if(jsonResult['ERROR']){
+          throw new Error(jsonResult['ERROR']);
+        }
       }
       return false;
     });
-  } catch {
-    console.log("Server not initialised!");
-    setContentInDesc(`Server not initialised`);
+  } catch(e) {
+    console.log(e);
+    setContentInDesc(e);
   }
 }
 
