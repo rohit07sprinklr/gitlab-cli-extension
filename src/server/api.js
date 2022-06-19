@@ -16,6 +16,7 @@ try {
 import { mergeProcess } from "./merge";
 import { getMergeCommits } from "./getMergeCommits";
 import { cherryPickProcess } from "./cherryPick";
+import { getProfiles, addProfile, deleteProfile } from "./profiles";
 import PQueue from "p-queue";
 const queue = new PQueue({ concurrency: 1 });
 
@@ -44,6 +45,15 @@ app.get("/handshake", async function (req, res) {
       "access-control-allow-origin": "*",
     })
     .end();
+});
+app.get("/profiles", async function (req, res) {
+  await getProfiles(req, res);
+});
+app.post("/profiles", async function (req, res) {
+  await addProfile(req, res);
+});
+app.delete("/profiles", async function (req, res) {
+  await deleteProfile(req, res);
 });
 
 app.get("/merge", async function (req, res) {
