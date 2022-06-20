@@ -17,6 +17,7 @@ async function getMergeCommits(req, res, config) {
       return;
     }
     const path = matchedRepo.path;
+    await git(path).fetch();
     const commitTimeFormatted = commitTime.replace("T", " ");
     const resp = await git(path).raw([
       "log",
