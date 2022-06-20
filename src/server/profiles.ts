@@ -69,4 +69,31 @@ async function deleteProfile(profileID, res) {
   });
 }
 
-export { getProfiles, addProfile, deleteProfile };
+async function updateProfile(profileID, profileData, res) {
+  const configPath = path.join(__dirname, "config.json");
+  fs.readFile(configPath, function (err, data) {
+    if (err) {
+      res.status(400).send(err);
+      return;
+    }
+    const jsonData = JSON.parse(data);
+    if (profileID > -1) {
+      jsonData.repos[profileID] = profileData;
+    }
+    fs.writeFile(
+      configPath,
+      JSON.stringify(jsonData),
+      {
+        encoding: "utf8",
+        flag: "w",
+        mode: 0o666,
+      },
+      (err) => {
+        if (err) res.status(400).send(err);
+        else res.status(200).send(jsonData);
+      }
+    );
+  });
+}
+
+export { getProfiles, addProfile, deleteProfile, updateProfile };

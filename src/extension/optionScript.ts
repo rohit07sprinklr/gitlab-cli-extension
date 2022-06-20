@@ -21,6 +21,20 @@ async function deleteProfile(profileNumber) {
   }
   renderProfiles();
 }
+async function updateProfile(profileNumber,profileData) {
+  const res = await fetch(`http://localhost:4000/profiles`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ id: profileNumber , profileData}),
+  });
+  if (res.status === 400) {
+    setContentInDesc(`Update Failed`);
+    return;
+  }
+  renderProfiles();
+}
 function renderFormElement(profile) {
   return `
 <td><input type="text" class="form-control" id="profile-url" value="${profile.url}" readonly=true></td>
@@ -31,6 +45,7 @@ function addFormHeader(tableHead) {
   formHeader.innerHTML = `
     <th scope="col">Repository URL</th>
     <th scope="col">Local Path</th>
+    <th scope="col" style="width:5%">Update</th>
     <th scope="col" style="width:5%">Remove</th>`;
   tableHead.appendChild(formHeader);
 }
@@ -76,8 +91,31 @@ async function renderProfiles() {
       tableRow.setAttribute("id", profileNumber);
       tableBody.append(tableRow);
       tableRow.innerHTML = renderFormElement(profile);
+      const tableColumnUpdate = document.createElement("td");
+      const updateButton = document.createElement("button");
+      updateButton.classList.add("btn", "btn-outline-primary");
+      updateButton.setAttribute('type','button');
+      updateButton.addEventListener("click", () => {
+        const profileURL = tableRow.querySelector('#profile-url');
+        const profilePath = tableRow.querySelector('#profile-path');
+        if(updateButton.innerText === "Save"){
+          updateProfile(profileNumber,{"url":profileURL.value,"path":profilePath.value});
+          updateButton.innerText = "Edit"
+          profileURL.setAttribute('readonly','true');
+          profilePath.setAttribute('readonly','true');
+        }
+        else{
+          updateButton.innerText = "Save";
+          profileURL.removeAttribute('readonly');
+          profilePath.removeAttribute('readonly');
+        }
+      });
+      updateButton.style.marginTop = "5px";
+      updateButton.innerText = "Edit";
+      tableColumnUpdate.appendChild(updateButton);
+      tableRow.appendChild(tableColumnUpdate);
 
-      const tableColumn = document.createElement("td");
+      const tableColumnDelete = document.createElement("td");
       const deleteButton = document.createElement("button");
       deleteButton.classList.add("btn", "btn-outline-danger");
       deleteButton.setAttribute('type','button');
@@ -86,8 +124,8 @@ async function renderProfiles() {
       });
       deleteButton.style.marginTop = "5px";
       deleteButton.innerText = "Delete";
-      tableColumn.appendChild(deleteButton);
-      tableRow.appendChild(tableColumn);
+      tableColumnDelete.appendChild(deleteButton);
+      tableRow.appendChild(tableColumnDelete);
     });
     document.body.appendChild(form);
     document.querySelector(".btn-show-profile").innerText = "Hide Active Profiles";
