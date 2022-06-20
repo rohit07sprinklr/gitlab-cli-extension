@@ -20,6 +20,7 @@ async function cherryPickRequest(jsonFormdata) {
           let jsonFormdataNew = jsonFormdata;
           jsonFormdataNew.commits =
             jsonFormdataNew.commits.slice(currentCommitId);
+          jsonFormdataNew.requestType = "continue";
           const form = document.querySelector(".commit-form");
           const continueButton = document.createElement("button");
 
@@ -27,11 +28,23 @@ async function cherryPickRequest(jsonFormdata) {
           continueButton.innerText = "Continue";
           continueButton.style.marginLeft = "10px";
 
+          const stopButton = document.createElement("button");
+
+          stopButton.classList.add("btn", "btn-outline-danger", "btn-stop");
+          stopButton.innerText = "Stop";
+          stopButton.style.marginLeft = "10px";
+
+          stopButton.addEventListener("click",() => {
+            window.location.reload();
+          })
+
           continueButton.addEventListener("click", async () => {
             form.removeChild(continueButton);
-            cherryPickRequest(jsonFormdata);
+            form.removeChild(stopButton);
+            cherryPickRequest(jsonFormdataNew);
           });
           form.appendChild(continueButton);
+          form.appendChild(stopButton);
         } else {
           setContentInDesc(chunkString);
         }
@@ -52,6 +65,7 @@ async function cherryPickCommits(path, commitBranch, targetBranch) {
   jsonFormdata.localPath = path;
   jsonFormdata.commitBranch = commitBranch;
   jsonFormdata.targetBranch = targetBranch;
+  jsonFormdata.requestType = "new";
 
   Array.from(table.rows).forEach((element, rowNumber) => {
     if (rowNumber > 0) {
@@ -68,7 +82,7 @@ async function cherryPickCommits(path, commitBranch, targetBranch) {
 function setContentInDesc(content) {
   const el = document.getElementById("cherry-pick-desc");
   el.style.display = "block";
-  el.textContent = content;
+  el.innerHTML = content;
 }
 function disableButton() {
   const buttons = document.querySelectorAll("button");
