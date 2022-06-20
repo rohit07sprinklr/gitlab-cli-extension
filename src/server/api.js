@@ -95,6 +95,7 @@ app.post("/cherrypick", async function (req, res) {
     "Transfer-Encoding": "chunked",
     "access-control-allow-origin": "*",
   });
+  res.write(`Cherry-Pick Queued `);
   queue.add(async () => await cherryPickProcess(req, res));
 });
 
