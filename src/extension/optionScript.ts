@@ -119,6 +119,7 @@ function AddProfile() {
     const jsonFormdata = {};
     formData.forEach((value, key) => (jsonFormdata[key] = value));
     setContentInDesc(`Adding Profile`);
+  try{
     const res = await fetch(`http://localhost:4000/profiles`, {
       method: "POST",
       headers: {
@@ -132,6 +133,9 @@ function AddProfile() {
     setContentInDesc(" ");
     addProfileForm.reset();
     renderProfiles();
+  }catch(e){
+    setContentInDesc(e);
+  }
   });
 }
 const main = () => {
