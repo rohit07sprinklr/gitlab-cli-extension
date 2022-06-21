@@ -7,9 +7,9 @@ Promise.all([
     outfile: "dist/extension/content.js",
   }),
   esbuild.build({
-    entryPoints: ["src/extension/script.ts"],
+    entryPoints: ["src/extension/cherryPickForm.ts"],
     bundle: true,
-    outfile: "dist/extension/assets/script.js",
+    outfile: "dist/extension/assets/cherryPickForm.js",
   }),
   esbuild.build({
     entryPoints: ["src/extension/popup.ts"],

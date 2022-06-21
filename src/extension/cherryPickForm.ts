@@ -170,6 +170,7 @@ const main = () => {
     if (commitForm != null) {
       document.body.removeChild(commitForm);
     }
+    setContentInDesc(`Fetching Merge Commits`);
     try {
       const res = await fetch(`http://localhost:4000/mergecommits`, {
         method: "POST",
