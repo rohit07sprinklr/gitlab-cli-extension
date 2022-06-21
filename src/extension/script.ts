@@ -3,7 +3,7 @@ import { fetchStream, streamBody } from "./fetchStream";
 import { getCurrentTab } from "./utils";
 
 async function cherryPickRequest(jsonFormdata) {
-  disableButton();
+  disableFormButton();
   try {
     await fetchStream(
       `http://localhost:4000/cherrypick`,
@@ -51,11 +51,11 @@ async function cherryPickRequest(jsonFormdata) {
       }
     ).then((res) => {
       if (!document.querySelector(".btn-continue")) {
-        enableButton();
+        enableFormButton();
       }
     });
   } catch (e) {
-    enableButton();
+    enableFormButton();
   }
 }
 async function cherryPickCommits(path, commitBranch, targetBranch) {
@@ -84,19 +84,19 @@ function setContentInDesc(content) {
   el.style.display = "block";
   el.innerHTML = content;
 }
-function disableButton() {
+function disableFormButton() {
   const buttons = document.querySelectorAll("button");
   buttons.forEach((button) => {
     button.setAttribute("disabled", "true");
   });
 }
-function enableButton() {
+function enableFormButton() {
   const buttons = document.querySelectorAll("button");
   buttons.forEach((button) => {
     button.removeAttribute("disabled");
   });
 }
-function renderFormElement(commit) {
+function addFormBody(commit) {
   return `
 <td><input type="checkbox" checked=true style="height:20px;"></td>
 <td><input type="text" class="form-control" id="commitsha" value="${commit.commitSHA}" readonly=true></td>
@@ -122,7 +122,7 @@ function renderForm(commits, path, commitBranch, targetBranch) {
   form.classList.add("commit-form");
 
   const tableDiv = document.createElement("div");
-  tableDiv.style.height = "350px";
+  tableDiv.style.maxHeight = "350px";
   tableDiv.style.overflowY = "scroll";
   form.appendChild(tableDiv);
 
@@ -140,7 +140,7 @@ function renderForm(commits, path, commitBranch, targetBranch) {
     const tableRow = document.createElement("tr");
     tableRow.style.height = "5%";
     tableBody.append(tableRow);
-    tableRow.innerHTML = renderFormElement(commit);
+    tableRow.innerHTML = addFormBody(commit);
   });
 
   const cherryPickButton = document.createElement("button");
@@ -162,8 +162,10 @@ const main = () => {
     e.preventDefault();
     const currentTab = await getCurrentTab();
     const formData = new FormData(e.target);
-    const jsonFormdata = {};
-    formData.forEach((value, key) => (jsonFormdata[key] = value));
+    const jsonFormdata = [...formData].reduce((jsonData,[key, value]) => {
+      jsonData[key] = value;
+      return jsonData;
+    },{});
     const currentURL = new URL(currentTab.url).search.split("=")[1];
     jsonFormdata["location"] = `${currentURL}`;
     const commitForm = document.querySelector(".commit-form");
