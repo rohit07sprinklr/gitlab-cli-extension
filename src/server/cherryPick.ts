@@ -4,29 +4,26 @@ import {wait} from './utils';
 
 async function cherryPickProcess(req, res) {
   try {
-    const path = req.body.localPath;
-    const commitBranch = req.body.commitBranch;
-    const targetBranch = req.body.targetBranch;
-    const requestType = req.body.requestType;
+    const {localPath,commitBranch,targetBranch,requestType } = req.body;
     await wait(100);
     if(requestType === 'new'){
       try {
-        await git(path).listRemote([
+        await git(localPath).listRemote([
           "--heads",
           "--exit-code",
           "origin",
           `${commitBranch}`,
         ]);
         //If found on remote repo
-        await git(path).fetch("origin", commitBranch);
-        await git(path).checkout(commitBranch);
-        await git(path).raw("reset", "--hard", `origin/${commitBranch}`);
+        await git(localPath).fetch("origin", commitBranch);
+        await git(localPath).checkout(commitBranch);
+        await git(localPath).raw("reset", "--hard", `origin/${commitBranch}`);
       }catch{
         //Niether in local nor remote repo checkout new branch from target branch
-        await git(path).checkoutBranch(`${commitBranch}`, `${targetBranch}`);
+        await git(localPath).checkoutBranch(`${commitBranch}`, `${targetBranch}`);
       }
     }else if(requestType === "continue"){
-      await git(path).checkout(commitBranch);
+      await git(localPath).checkout(commitBranch);
     }
     const gitLogs = req.body.commits;
     let completedCommits = 0;
@@ -39,7 +36,7 @@ async function cherryPickProcess(req, res) {
           continue;
         }
         res.write(`Cherry pick ${gitLog.commitSHA}`);
-        const cherryPickResult = await git(path).raw([
+        const cherryPickResult = await git(localPath).raw([
           "cherry-pick",
           "-m",
           "1",
@@ -52,7 +49,7 @@ async function cherryPickProcess(req, res) {
         await wait(500);
       }
     } catch (e) {
-      await git(path).raw("reset", "--hard");
+      await git(localPath).raw("reset", "--hard");
       console.log("Failed");
       res.write(`<strong> Automatic Cherry-pick ${currentCommitSHA} Failed: You can still cherry-pick this commit manually. 
       Press Continue to proceed or Stop to End</strong> <br> <hr> ${e.toString()}`);

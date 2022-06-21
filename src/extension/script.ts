@@ -17,10 +17,8 @@ async function cherryPickRequest(jsonFormdata) {
           if (currentCommitId > jsonFormdata.commits.length) {
             return;
           }
-          let jsonFormdataNew = jsonFormdata;
-          jsonFormdataNew.commits =
-            jsonFormdataNew.commits.slice(currentCommitId);
-          jsonFormdataNew.requestType = "continue";
+          jsonFormdata.commits = jsonFormdata.commits.slice(currentCommitId);
+          jsonFormdata.requestType = "continue";
           const form = document.querySelector(".commit-form");
           const continueButton = document.createElement("button");
 
@@ -34,14 +32,14 @@ async function cherryPickRequest(jsonFormdata) {
           stopButton.innerText = "Stop";
           stopButton.style.marginLeft = "10px";
 
-          stopButton.addEventListener("click",() => {
+          stopButton.addEventListener("click", () => {
             window.location.reload();
-          })
+          });
 
           continueButton.addEventListener("click", async () => {
             form.removeChild(continueButton);
             form.removeChild(stopButton);
-            cherryPickRequest(jsonFormdataNew);
+            cherryPickRequest(jsonFormdata);
           });
           form.appendChild(continueButton);
           form.appendChild(stopButton);
@@ -162,16 +160,16 @@ const main = () => {
     e.preventDefault();
     const currentTab = await getCurrentTab();
     const formData = new FormData(e.target);
-    const jsonFormdata = [...formData].reduce((jsonData,[key, value]) => {
+    const jsonFormdata = [...formData].reduce((jsonData, [key, value]) => {
       jsonData[key] = value;
       return jsonData;
-    },{});
+    }, {});
     const currentURL = new URL(currentTab.url).search.split("=")[1];
     jsonFormdata["location"] = `${currentURL}`;
     const commitForm = document.querySelector(".commit-form");
-      if (commitForm != null) {
-        document.body.removeChild(commitForm);
-      }
+    if (commitForm != null) {
+      document.body.removeChild(commitForm);
+    }
     try {
       const res = await fetch(`http://localhost:4000/mergecommits`, {
         method: "POST",
@@ -182,8 +180,8 @@ const main = () => {
         body: JSON.stringify(jsonFormdata),
       });
       const jsonResult = await res.json();
-      if(jsonResult['ERROR']){
-        throw new Error(jsonResult['ERROR']);
+      if (jsonResult["ERROR"]) {
+        throw new Error(jsonResult["ERROR"]);
       }
       renderForm(
         jsonResult.commits,

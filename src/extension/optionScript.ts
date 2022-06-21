@@ -1,3 +1,5 @@
+import { fetchProfileRequest } from "./utils";
+
 function setContentInDesc(content) {
   const el = document.getElementById("options-desc");
   if (content.toString().trim() === "") {
@@ -8,34 +10,24 @@ function setContentInDesc(content) {
   el.textContent = content;
 }
 async function deleteProfile(profileNumber) {
-  const res = await fetch(`http://localhost:4000/profiles`, {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ id: profileNumber }),
-  });
+  const jsonFormdata = { id: profileNumber };
+  const res = await fetchProfileRequest(jsonFormdata, "DELETE");
   if (res.status === 400) {
     setContentInDesc(`Delete Failed`);
     return;
   }
   renderProfiles();
 }
-async function updateProfile(profileNumber,profileData) {
-  const res = await fetch(`http://localhost:4000/profiles`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ id: profileNumber , profileData}),
-  });
+async function updateProfile(profileNumber, profileData) {
+  const jsonFormdata = { id: profileNumber, profileData };
+  const res = await fetchProfileRequest(jsonFormdata, "PUT");
   if (res.status === 400) {
     setContentInDesc(`Update Failed`);
     return;
   }
   renderProfiles();
 }
-function renderFormElement(profile) {
+function addFormBody(profile) {
   return `
 <td><input type="text" class="form-control" id="profile-url" value="${profile.url}" readonly=true></td>
 <td><input type="text" class="form-control" id="profile-path" value="${profile.path}" readonly=true></td>`;
@@ -49,21 +41,31 @@ function addFormHeader(tableHead) {
     <th scope="col" style="width:5%">Remove</th>`;
   tableHead.appendChild(formHeader);
 }
-
+function renderEditProfileButton(buttonType){
+  const editProfileButton = document.createElement("button");
+  if (buttonType === "Delete")
+    editProfileButton.classList.add("btn", "btn-outline-danger");
+  else editProfileButton.classList.add("btn", "btn-outline-primary");
+  editProfileButton.setAttribute("type", "button");
+  editProfileButton.style.marginTop = "5px";
+  editProfileButton.innerText = buttonType;
+  return editProfileButton;
+}
 async function renderProfiles() {
   try {
-    const res = await fetch(`http://localhost:4000/profiles`);
+    const res = await fetchProfileRequest(null, "GET");
     if (res.status === 400) {
       throw new Error(`Config File Missing`);
     }
     const profiles = await res.json();
-    const profileForm = document.querySelector('.profile-form');
-    if(profileForm != null){
+    const profileForm = document.querySelector(".profile-form");
+    if (profileForm != null) {
       document.body.removeChild(profileForm);
     }
     setContentInDesc(`${profiles.repos.length} Profiles Found!`);
     if (!profiles.repos.length) {
-      document.querySelector(".btn-show-profile").innerText = "Get Active Profiles";
+      document.querySelector(".btn-show-profile").innerText =
+        "Get Active Profiles";
       return;
     }
     const form = document.createElement("form");
@@ -90,45 +92,41 @@ async function renderProfiles() {
       tableRow.style.height = "5%";
       tableRow.setAttribute("id", profileNumber);
       tableBody.append(tableRow);
-      tableRow.innerHTML = renderFormElement(profile);
+      tableRow.innerHTML = addFormBody(profile);
+      
       const tableColumnUpdate = document.createElement("td");
-      const updateButton = document.createElement("button");
-      updateButton.classList.add("btn", "btn-outline-primary");
-      updateButton.setAttribute('type','button');
+      const updateButton = renderEditProfileButton("Edit");
       updateButton.addEventListener("click", () => {
-        const profileURL = tableRow.querySelector('#profile-url');
-        const profilePath = tableRow.querySelector('#profile-path');
-        if(updateButton.innerText === "Save"){
-          updateProfile(profileNumber,{"url":profileURL.value,"path":profilePath.value});
-          updateButton.innerText = "Edit"
-          profileURL.setAttribute('readonly','true');
-          profilePath.setAttribute('readonly','true');
-        }
-        else{
+        const profileURL = tableRow.querySelector("#profile-url");
+        const profilePath = tableRow.querySelector("#profile-path");
+        if (updateButton.innerText === "Save") {
+          updateProfile(profileNumber, {
+            url: profileURL.value,
+            path: profilePath.value,
+          });
+          updateButton.innerText = "Edit";
+          profileURL.setAttribute("readonly", "true");
+          profilePath.setAttribute("readonly", "true");
+        } else {
           updateButton.innerText = "Save";
-          profileURL.removeAttribute('readonly');
-          profilePath.removeAttribute('readonly');
+          profileURL.removeAttribute("readonly");
+          profilePath.removeAttribute("readonly");
         }
       });
-      updateButton.style.marginTop = "5px";
-      updateButton.innerText = "Edit";
       tableColumnUpdate.appendChild(updateButton);
       tableRow.appendChild(tableColumnUpdate);
 
       const tableColumnDelete = document.createElement("td");
-      const deleteButton = document.createElement("button");
-      deleteButton.classList.add("btn", "btn-outline-danger");
-      deleteButton.setAttribute('type','button');
+      const deleteButton = renderEditProfileButton("Delete");
       deleteButton.addEventListener("click", () => {
         deleteProfile(profileNumber);
       });
-      deleteButton.style.marginTop = "5px";
-      deleteButton.innerText = "Delete";
       tableColumnDelete.appendChild(deleteButton);
       tableRow.appendChild(tableColumnDelete);
     });
     document.body.appendChild(form);
-    document.querySelector(".btn-show-profile").innerText = "Hide Active Profiles";
+    document.querySelector(".btn-show-profile").innerText =
+      "Hide Active Profiles";
   } catch (e) {
     setContentInDesc(e);
   }
@@ -157,23 +155,17 @@ function AddProfile() {
     const jsonFormdata = {};
     formData.forEach((value, key) => (jsonFormdata[key] = value));
     setContentInDesc(`Adding Profile`);
-  try{
-    const res = await fetch(`http://localhost:4000/profiles`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(jsonFormdata),
-    });
-    if (res.status === 400) {
-      throw new Error();
+    try {
+      const res = await fetchProfileRequest(jsonFormdata, "POST");
+      if (res.status === 400) {
+        throw new Error();
+      }
+      setContentInDesc(" ");
+      addProfileForm.reset();
+      renderProfiles();
+    } catch (e) {
+      setContentInDesc(e);
     }
-    setContentInDesc(" ");
-    addProfileForm.reset();
-    renderProfiles();
-  }catch(e){
-    setContentInDesc(e);
-  }
   });
 }
 const main = () => {

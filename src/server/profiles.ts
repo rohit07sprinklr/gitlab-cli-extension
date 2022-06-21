@@ -1,6 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 
+import { writeConfigFile } from "./utils";
+
 async function getProfiles(res) {
   const configPath = path.join(__dirname, "config.json");
   fs.readFile(configPath, function (err, data) {
@@ -24,21 +26,7 @@ async function addProfile(profileData, res) {
       jsonData = JSON.parse(data);
     }
     jsonData.repos.push(profileData);
-    fs.writeFile(
-      configPath,
-      JSON.stringify(jsonData),
-      {
-        encoding: "utf8",
-        flag: "w",
-        mode: 0o666,
-      },
-      (err) => {
-        if (err) res.status(400).send(err);
-        else {
-          res.status(200).send(jsonData);
-        }
-      }
-    );
+    writeConfigFile(res, configPath, jsonData);
   });
 }
 
@@ -53,19 +41,7 @@ async function deleteProfile(profileID, res) {
     if (profileID > -1) {
       jsonData.repos.splice(profileID, 1);
     }
-    fs.writeFile(
-      configPath,
-      JSON.stringify(jsonData),
-      {
-        encoding: "utf8",
-        flag: "w",
-        mode: 0o666,
-      },
-      (err) => {
-        if (err) res.status(400).send(err);
-        else res.status(200).send(jsonData);
-      }
-    );
+    writeConfigFile(res, configPath, jsonData);
   });
 }
 
@@ -80,19 +56,7 @@ async function updateProfile(profileID, profileData, res) {
     if (profileID > -1) {
       jsonData.repos[profileID] = profileData;
     }
-    fs.writeFile(
-      configPath,
-      JSON.stringify(jsonData),
-      {
-        encoding: "utf8",
-        flag: "w",
-        mode: 0o666,
-      },
-      (err) => {
-        if (err) res.status(400).send(err);
-        else res.status(200).send(jsonData);
-      }
-    );
+    writeConfigFile(res, configPath, jsonData);
   });
 }
 

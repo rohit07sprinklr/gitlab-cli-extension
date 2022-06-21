@@ -1,18 +1,12 @@
 const git = require("simple-git");
 
+import {getLocalRepository} from './utils';
+
 async function getMergeCommits(req, res, config) {
   try {
-    if(!config.repos || config.repos.length===0){
-      console.log(`ERROR: URL Not Found`);
-      res.end(JSON.stringify({"ERROR":"URL Not Found"}));
-      return;
-    }
     const { commitAuthor, commitBranch, commitTime, location } = req.body;
-    const matchedRepo = config.repos.find((repo) =>
-      location.startsWith(repo.url)
-    )
+    const matchedRepo = getLocalRepository(config,location);
     if(!matchedRepo){
-      console.log(`ERROR: URL Not Found`);
       res.end(JSON.stringify({"ERROR":"URL Not Found"}));
       return;
     }
