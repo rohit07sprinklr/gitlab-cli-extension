@@ -3,7 +3,7 @@
   "description": "Gitlab PRs via CLI",
   "version": "1.0",
   "manifest_version": 3,
-  "permissions": ["storage", "tabs"],
+  "permissions": ["storage", "tabs", "declarativeContent"],
   "content_scripts": [
     {
       "matches": ["https://*/*/-/merge_requests/*"],
@@ -12,6 +12,9 @@
   ],
   "action": {
     "default_popup": "index.html"
+  },
+  "background": {
+    "service_worker": "background.js"
   },
   "options_page": "options.html",
   "icons": {
