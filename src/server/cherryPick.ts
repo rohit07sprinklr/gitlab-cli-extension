@@ -1,8 +1,6 @@
 const git = require("simple-git");
 
-function wait(millis) {
-  return new Promise((res) => setTimeout(res, millis));
-}
+import {wait} from './utils';
 
 async function cherryPickCommit(gitLogs, path, res) {
   for (const gitLog of gitLogs) {
