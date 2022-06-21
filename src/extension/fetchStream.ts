@@ -33,9 +33,8 @@ function streamBody(body, onChunkReceive) {
       });
     })
     .then((rs) => new Response(rs))
-    .then((response) => response.text());
+    .then((response) => response.text())
 }
-
 function fetchBuilder(url, method, payload) {
   if (method === "GET") {
     return fetch(url);
@@ -50,7 +49,6 @@ function fetchBuilder(url, method, payload) {
     });
   }
 }
-
 function fetchStream(url, method, payload, onChunkReceive) {
   return fetchBuilder(url, method, payload)
     .then((r) => {
@@ -60,6 +58,13 @@ function fetchStream(url, method, payload, onChunkReceive) {
         });
       }
       return r.body;
+    }).catch(e=>{
+      onChunkReceive(e);
+      throw e;
+    })
+    .catch((e) => {
+      onChunkReceive(e);
+      throw e;
     })
     .catch((e) => {
       onChunkReceive(e.toString());
