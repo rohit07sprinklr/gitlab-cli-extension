@@ -1,8 +1,4 @@
-const currentURL = new URL(window.location);
-const ORIGIN = currentURL.origin;
-
-async function fetchBuilder(method,path){
-    const csrf_token = document.querySelector('[name="csrf-token"]').content;
+async function fetchBuilder(method,path,ORIGIN,csrf_token){
     return fetch(`${ORIGIN}/api/v4/${path}`,
     {
       headers: {
@@ -26,7 +22,7 @@ async function fetchBuilder(method,path){
       credentials: "include",
     })
 }
-export async function GET(path){
-    return fetchBuilder('GET',path);
+export async function GET(path,ORIGN,csrf_token){
+    return fetchBuilder('GET',path,ORIGN,csrf_token);
 }
 export * as ajaxClient from "./ajaxClient"

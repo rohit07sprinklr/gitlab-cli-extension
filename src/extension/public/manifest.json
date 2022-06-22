@@ -3,7 +3,7 @@
   "description": "Gitlab PRs via CLI",
   "version": "1.0",
   "manifest_version": 3,
-  "permissions": ["storage", "tabs", "declarativeContent"],
+  "permissions": ["tabs", "declarativeContent", "scripting", "activeTab"],
   "content_scripts": [
     {
       "matches": ["https://*/*/-/merge_requests/new*"],
@@ -13,7 +13,7 @@
     },
     {
       "matches": ["https://*/*/-/merge_requests/*"],
-      "exclude_globs":[ "*create_cherrypick_commit*" ],
+      "exclude_globs":[ "*/new*","*/edit" ],
       "run_at": "document_end",
       "js": ["./content.js"]
     }
