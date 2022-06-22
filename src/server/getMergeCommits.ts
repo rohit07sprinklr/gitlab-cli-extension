@@ -11,6 +11,7 @@ async function getMergeCommits(req, res, config) {
       return;
     }
     const path = matchedRepo.path;
+    const url = matchedRepo.url;
     await git(path).fetch();
     const commitTimeFormatted = commitTime.replace("T", " ");
     const resp = await git(path).raw([
@@ -33,6 +34,7 @@ async function getMergeCommits(req, res, config) {
     const result = resp.split("\n");
     const gitLogs = result.reverse();
     jsonResponse["path"] = path;
+    jsonResponse["url"] = url;
     for (const gitLog of gitLogs) {
       const commitInfo = gitLog.split("--");
       const commitJSONdata = {

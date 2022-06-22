@@ -1,12 +1,12 @@
 const git = require("simple-git");
 
-import {wait} from './utils';
+import { wait, renderPauseMessage } from "./utils";
 
 async function cherryPickProcess(req, res) {
   try {
-    const {localPath,commitBranch,targetBranch,requestType } = req.body;
+    const { localPath, commitBranch, targetBranch, requestType } = req.body;
     await wait(100);
-    if(requestType === 'new'){
+    if (requestType === "new") {
       try {
         await git(localPath).listRemote([
           "--heads",
@@ -18,11 +18,11 @@ async function cherryPickProcess(req, res) {
         await git(localPath).fetch("origin", commitBranch);
         await git(localPath).checkout(commitBranch);
         await git(localPath).raw("reset", "--hard", `origin/${commitBranch}`);
-      }catch{
+      } catch {
         //Niether in local nor remote repo checkout new branch from target branch
         await git(localPath).checkoutBranch(commitBranch, targetBranch);
       }
-    }else if(requestType === "continue"){
+    } else if (requestType === "continue") {
       await git(localPath).checkout(commitBranch);
     }
     const gitLogs = req.body.commits;
@@ -51,13 +51,7 @@ async function cherryPickProcess(req, res) {
     } catch (e) {
       await git(localPath).raw("reset", "--hard");
       console.log("Failed");
-      res.write(`<strong> Automatic Cherry-pick ${currentCommitSHA} Failed: You can still cherry-pick this commit manually. 
-      Press Continue after manually cherry pick or Stop to End</strong> <br> Copy and paste this in your local repository:<br>  
-      <div class="card">
-        <div class="card-body">
-          <b>git cherry-pick -m 1 ${currentCommitSHA}</b>
-        </div>
-      </div>${e.toString()}`);
+      res.write(renderPauseMessage(currentCommitSHA, e));
       await wait(100);
       res.write(`Paused {${completedCommits}}`);
       res.end();
@@ -65,7 +59,7 @@ async function cherryPickProcess(req, res) {
       return;
     }
     //git push --set-upstream origin feature/cherry-pick
-    res.write("Cherry Pick Completed");
+    res.write("COMPLETED Cherry-Pick");
     res.end();
   } catch (e) {
     res.write(e.toString());

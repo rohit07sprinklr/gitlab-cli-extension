@@ -16,4 +16,12 @@ async function fetchProfileRequest(jsonInputBody, method) {
     body: JSON.stringify(jsonInputBody),
   });
 }
-export { getCurrentTab, fetchProfileRequest };
+function getSearchQueryParams(searchQuery) {
+  return JSON.parse(
+    '{"' + searchQuery.replace(/&/g, '","').replace(/=/g, '":"') + '"}',
+    function (key, value) {
+      return key === "" ? value : decodeURIComponent(value);
+    }
+  );
+}
+export { getCurrentTab, fetchProfileRequest, getSearchQueryParams};

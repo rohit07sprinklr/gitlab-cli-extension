@@ -6,7 +6,15 @@
   "permissions": ["storage", "tabs", "declarativeContent"],
   "content_scripts": [
     {
+      "matches": ["https://*/*/-/merge_requests/new*"],
+      "include_globs":[ "*create_cherrypick_commit*" ],
+      "run_at": "document_end",
+      "js": ["./createMergeRequest.js"]
+    },
+    {
       "matches": ["https://*/*/-/merge_requests/*"],
+      "exclude_globs":[ "*create_cherrypick_commit*" ],
+      "run_at": "document_end",
       "js": ["./content.js"]
     }
   ],

@@ -1,7 +1,62 @@
 import { fetchStream, streamBody } from "./fetchStream";
-
 import { getCurrentTab } from "./utils";
 
+function onCherryPickPause(jsonFormdata, currentCommitId) {
+  jsonFormdata.commits = jsonFormdata.commits.slice(currentCommitId);
+  jsonFormdata.requestType = "continue";
+  const form = document.querySelector(".commit-form");
+  const continueButton = document.createElement("button");
+
+  continueButton.classList.add("btn", "btn-outline-primary", "btn-continue");
+  continueButton.innerText = "Continue";
+  continueButton.style.marginLeft = "10px";
+  continueButton.setAttribute("type", "button");
+
+  const stopButton = document.createElement("button");
+
+  stopButton.classList.add("btn", "btn-outline-danger", "btn-stop");
+  stopButton.innerText = "Stop";
+  stopButton.style.marginLeft = "10px";
+  stopButton.setAttribute("type", "button");
+
+  stopButton.addEventListener("click", () => {
+    window.location.reload();
+  });
+
+  continueButton.addEventListener("click", async () => {
+    form.removeChild(continueButton);
+    form.removeChild(stopButton);
+    cherryPickRequest(jsonFormdata);
+  });
+  form.appendChild(continueButton);
+  form.appendChild(stopButton);
+
+  const copyButton = document.querySelector(".copy-button");
+  if (copyButton) {
+    copyButton.addEventListener("click", () => {
+      const copyText = document.getElementById("gitCopyMessage");
+      navigator.clipboard.writeText(copyText.innerText);
+    });
+  }
+}
+function onCherryPickComplete(commitBranch, targetBranch, url) {
+  const form = document.querySelector(".commit-form");
+  const completeButton = document.createElement("button");
+
+  completeButton.classList.add("btn", "btn-outline-primary", "btn-complete");
+  completeButton.innerText = "Create Merge Request";
+  completeButton.style.marginLeft = "10px";
+  completeButton.setAttribute("type", "button");
+
+  completeButton.addEventListener("click", async () => {
+    window.open(
+      `${url}/-/merge_requests/new?create_cherrypick_commit=true&target_branch=${encodeURIComponent(
+        targetBranch
+      )}&commit_branch=${encodeURIComponent(commitBranch)}`
+    );
+  });
+  form.appendChild(completeButton);
+}
 async function cherryPickRequest(jsonFormdata) {
   disableFormButton();
   try {
@@ -17,32 +72,14 @@ async function cherryPickRequest(jsonFormdata) {
           if (currentCommitId > jsonFormdata.commits.length) {
             return;
           }
-          jsonFormdata.commits = jsonFormdata.commits.slice(currentCommitId);
-          jsonFormdata.requestType = "continue";
-          const form = document.querySelector(".commit-form");
-          const continueButton = document.createElement("button");
-
-          continueButton.classList.add("btn", "btn-primary", "btn-continue");
-          continueButton.innerText = "Continue";
-          continueButton.style.marginLeft = "10px";
-
-          const stopButton = document.createElement("button");
-
-          stopButton.classList.add("btn", "btn-outline-danger", "btn-stop");
-          stopButton.innerText = "Stop";
-          stopButton.style.marginLeft = "10px";
-
-          stopButton.addEventListener("click", () => {
-            window.location.reload();
-          });
-
-          continueButton.addEventListener("click", async () => {
-            form.removeChild(continueButton);
-            form.removeChild(stopButton);
-            cherryPickRequest(jsonFormdata);
-          });
-          form.appendChild(continueButton);
-          form.appendChild(stopButton);
+          onCherryPickPause(jsonFormdata, currentCommitId);
+        } else if (chunkString.toLowerCase().startsWith("completed")) {
+          setContentInDesc(chunkString);
+          onCherryPickComplete(
+            jsonFormdata.commitBranch,
+            jsonFormdata.targetBranch,
+            jsonFormdata.url
+          );
         } else {
           setContentInDesc(chunkString);
         }
@@ -56,7 +93,7 @@ async function cherryPickRequest(jsonFormdata) {
     enableFormButton();
   }
 }
-async function cherryPickCommits(path, commitBranch, targetBranch) {
+async function cherryPickCommits(url, path, commitBranch, targetBranch) {
   const table = document.querySelector(".table");
   const jsonFormdata = {};
   jsonFormdata.commits = [];
@@ -64,6 +101,7 @@ async function cherryPickCommits(path, commitBranch, targetBranch) {
   jsonFormdata.commitBranch = commitBranch;
   jsonFormdata.targetBranch = targetBranch;
   jsonFormdata.requestType = "new";
+  jsonFormdata.url = url;
 
   Array.from(table.rows).forEach((element, rowNumber) => {
     if (rowNumber > 0) {
@@ -111,7 +149,7 @@ function addFormHeader(tableHead) {
   <th scope="col">Commit Message</th>`;
   tableHead.appendChild(formHeader);
 }
-function renderForm(commits, path, commitBranch, targetBranch) {
+function renderForm(commits, url, path, commitBranch, targetBranch) {
   setContentInDesc(`${commits.length} Merge Commits Found!`);
   if (!commits.length) {
     return;
@@ -149,7 +187,7 @@ function renderForm(commits, path, commitBranch, targetBranch) {
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    await cherryPickCommits(path, commitBranch, targetBranch);
+    await cherryPickCommits(url, path, commitBranch, targetBranch);
   });
   document.body.appendChild(form);
 }
@@ -158,6 +196,7 @@ const main = () => {
   const cherryPickForm = document.querySelector(".cherry-pick-form");
   cherryPickForm.addEventListener("submit", async (e) => {
     e.preventDefault();
+    disableFormButton();
     const currentTab = await getCurrentTab();
     const formData = new FormData(e.target);
     const jsonFormdata = [...formData].reduce((jsonData, [key, value]) => {
@@ -181,11 +220,13 @@ const main = () => {
         body: JSON.stringify(jsonFormdata),
       });
       const jsonResult = await res.json();
+      enableFormButton();
       if (jsonResult["ERROR"]) {
         throw new Error(jsonResult["ERROR"]);
       }
       renderForm(
         jsonResult.commits,
+        jsonResult.url,
         jsonResult.path,
         jsonFormdata.commitBranch,
         jsonFormdata.targetBranch

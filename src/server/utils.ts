@@ -32,3 +32,15 @@ export function writeConfigFile(res, configPath, jsonData) {
     }
   );
 }
+export function renderPauseMessage(currentCommitSHA, e) {
+  return `
+  <strong> Automatic Cherry-pick ${currentCommitSHA} Failed: You can still cherry-pick this commit manually. 
+  Press Continue after manual cherry pick or Stop to End</strong><br> 
+  Copy and paste this in your local repository:<br>  
+  <div class="card">
+    <div class="card-body">
+      <button type="button" class="copy-button"><img src="../clipboard.svg"></img></button>
+      <b id="gitCopyMessage"> git cherry-pick -m 1 ${currentCommitSHA}</b>
+    </div>
+  </div>${e.toString()}`;
+}

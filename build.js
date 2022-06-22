@@ -7,6 +7,11 @@ Promise.all([
     outfile: "dist/extension/content.js",
   }),
   esbuild.build({
+    entryPoints: ["src/extension/createMergeRequest.ts"],
+    bundle: true,
+    outfile: "dist/extension/createMergeRequest.js",
+  }),
+  esbuild.build({
     entryPoints: ["src/extension/cherryPickForm.ts"],
     bundle: true,
     outfile: "dist/extension/assets/cherryPickForm.js",
