@@ -12,7 +12,7 @@ async function cherryPickProcess(req, res) {
           "--heads",
           "--exit-code",
           "origin",
-          `${commitBranch}`,
+          commitBranch,
         ]);
         //If found on remote repo
         await git(localPath).fetch("origin", commitBranch);
@@ -20,7 +20,7 @@ async function cherryPickProcess(req, res) {
         await git(localPath).raw("reset", "--hard", `origin/${commitBranch}`);
       }catch{
         //Niether in local nor remote repo checkout new branch from target branch
-        await git(localPath).checkoutBranch(`${commitBranch}`, `${targetBranch}`);
+        await git(localPath).checkoutBranch(commitBranch, targetBranch);
       }
     }else if(requestType === "continue"){
       await git(localPath).checkout(commitBranch);
@@ -40,7 +40,7 @@ async function cherryPickProcess(req, res) {
           "cherry-pick",
           "-m",
           "1",
-          `${gitLog.commitSHA}`,
+          gitLog.commitSHA,
         ]);
         await wait(500);
         console.log(`Cherry-pick ${gitLog.commitSHA} Successful`);
@@ -52,7 +52,12 @@ async function cherryPickProcess(req, res) {
       await git(localPath).raw("reset", "--hard");
       console.log("Failed");
       res.write(`<strong> Automatic Cherry-pick ${currentCommitSHA} Failed: You can still cherry-pick this commit manually. 
-      Press Continue to proceed or Stop to End</strong> <br> <hr> ${e.toString()}`);
+      Press Continue after manually cherry pick or Stop to End</strong> <br> Copy and paste this in your local repository:<br>  
+      <div class="card">
+        <div class="card-body">
+          <b>git cherry-pick -m 1 ${currentCommitSHA}</b>
+        </div>
+      </div>${e.toString()}`);
       await wait(100);
       res.write(`Paused {${completedCommits}}`);
       res.end();
@@ -63,7 +68,7 @@ async function cherryPickProcess(req, res) {
     res.write("Cherry Pick Completed");
     res.end();
   } catch (e) {
-    res.write(`${e.toString()}`);
+    res.write(e.toString());
     console.error(e);
     res.end();
   }

@@ -165,7 +165,7 @@ const main = () => {
       return jsonData;
     }, {});
     const currentURL = new URL(currentTab.url).search.split("=")[1];
-    jsonFormdata["location"] = `${currentURL}`;
+    jsonFormdata["location"] = currentURL;
     const commitForm = document.querySelector(".commit-form");
     if (commitForm != null) {
       document.body.removeChild(commitForm);

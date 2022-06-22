@@ -1,13 +1,13 @@
 const git = require("simple-git");
 
-import {getLocalRepository} from './utils';
+import { getLocalRepository } from "./utils";
 
 async function getMergeCommits(req, res, config) {
   try {
     const { commitAuthor, commitBranch, commitTime, location } = req.body;
-    const matchedRepo = getLocalRepository(config,location);
-    if(!matchedRepo){
-      res.end(JSON.stringify({"ERROR":"URL Not Found"}));
+    const matchedRepo = getLocalRepository(config, location);
+    if (!matchedRepo) {
+      res.end(JSON.stringify({ ERROR: "URL Not Found" }));
       return;
     }
     const path = matchedRepo.path;
@@ -17,11 +17,11 @@ async function getMergeCommits(req, res, config) {
       "log",
       "--pretty=format:%h--%ad--%s",
       "--author",
-      `${commitAuthor}`,
+      commitAuthor,
       "--remotes",
       "--merges",
       "--since",
-      `${commitTimeFormatted}`,
+      commitTimeFormatted,
     ]);
     const jsonResponse = {};
     jsonResponse["commits"] = [];
@@ -45,6 +45,7 @@ async function getMergeCommits(req, res, config) {
     res.end(JSON.stringify(jsonResponse));
   } catch (e) {
     console.log(e);
+    res.end(JSON.stringify({ "ERROR": e.toString() }));
     res.end();
   }
 }
