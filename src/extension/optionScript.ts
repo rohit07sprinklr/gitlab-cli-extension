@@ -42,14 +42,12 @@ function addFormBody(profile) {
 <td><input type="text" class="form-control" id="profile-url" value="${profile.url}" readonly=true></td>
 <td><input type="text" class="form-control" id="profile-path" value="${profile.path}" readonly=true></td>`;
 }
-function addFormHeader(tableHead) {
-  const formHeader = document.createElement("tr");
-  formHeader.innerHTML = `
+function addFormHeader() {
+  return `
     <th scope="col">Repository URL</th>
     <th scope="col">Local Path</th>
     <th scope="col" style="width:5%">Update</th>
     <th scope="col" style="width:5%">Remove</th>`;
-  tableHead.appendChild(formHeader);
 }
 function renderEditProfileButton(buttonType) {
   const editProfileButton = document.createElement("button");
@@ -98,7 +96,10 @@ async function renderProfiles() {
 
     const tableHead = document.createElement("thead");
     table.appendChild(tableHead);
-    addFormHeader(tableHead);
+    
+    const formHeader = document.createElement("tr");
+    formHeader.innerHTML = addFormHeader();
+    tableHead.appendChild(formHeader);
 
     const tableBody = document.createElement("tbody");
     table.appendChild(tableBody);
@@ -167,8 +168,10 @@ function AddProfile() {
   addProfileForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const jsonFormdata = {};
-    formData.forEach((value, key) => (jsonFormdata[key] = value));
+    const jsonFormdata = [...formData].reduce((jsonData, [key, value]) => {
+      jsonData[key] = value;
+      return jsonData;
+    }, {});
     setContentInDesc(`Adding Profile`);
     try {
       const res = await ajaxClient.POST(
