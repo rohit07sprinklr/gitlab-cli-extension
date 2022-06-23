@@ -1,4 +1,4 @@
-import { fetchProfileRequest } from "./utils";
+import { ajaxClient } from "./ajaxClient";
 
 function setContentInDesc(content) {
   const el = document.getElementById("options-desc");
@@ -11,7 +11,12 @@ function setContentInDesc(content) {
 }
 async function deleteProfile(profileNumber) {
   const jsonFormdata = { id: profileNumber };
-  const res = await fetchProfileRequest(jsonFormdata, "DELETE");
+  const res = await ajaxClient.DELETE(
+    `http://localhost:4000`,
+    `profiles`,
+    "CLIRequest",
+    jsonFormdata
+  );
   if (res.status === 400) {
     setContentInDesc(`Delete Failed`);
     return;
@@ -20,7 +25,12 @@ async function deleteProfile(profileNumber) {
 }
 async function updateProfile(profileNumber, profileData) {
   const jsonFormdata = { id: profileNumber, profileData };
-  const res = await fetchProfileRequest(jsonFormdata, "PUT");
+  const res = await ajaxClient.PUT(
+    `http://localhost:4000`,
+    `profiles`,
+    "CLIRequest",
+    jsonFormdata
+  );
   if (res.status === 400) {
     setContentInDesc(`Update Failed`);
     return;
@@ -41,7 +51,7 @@ function addFormHeader(tableHead) {
     <th scope="col" style="width:5%">Remove</th>`;
   tableHead.appendChild(formHeader);
 }
-function renderEditProfileButton(buttonType){
+function renderEditProfileButton(buttonType) {
   const editProfileButton = document.createElement("button");
   if (buttonType === "Delete")
     editProfileButton.classList.add("btn", "btn-outline-danger");
@@ -53,7 +63,12 @@ function renderEditProfileButton(buttonType){
 }
 async function renderProfiles() {
   try {
-    const res = await fetchProfileRequest(null, "GET");
+    const res = await ajaxClient.GET(
+      `http://localhost:4000`,
+      `profiles`,
+      "",
+      "CLIRequest"
+    );
     if (res.status === 400) {
       throw new Error(`Config File Missing`);
     }
@@ -93,7 +108,7 @@ async function renderProfiles() {
       tableRow.setAttribute("id", profileNumber);
       tableBody.append(tableRow);
       tableRow.innerHTML = addFormBody(profile);
-      
+
       const tableColumnUpdate = document.createElement("td");
       const updateButton = renderEditProfileButton("Edit");
       updateButton.addEventListener("click", () => {
@@ -156,7 +171,12 @@ function AddProfile() {
     formData.forEach((value, key) => (jsonFormdata[key] = value));
     setContentInDesc(`Adding Profile`);
     try {
-      const res = await fetchProfileRequest(jsonFormdata, "POST");
+      const res = await ajaxClient.POST(
+        `http://localhost:4000`,
+        `profiles`,
+        "CLIRequest",
+        jsonFormdata
+      );
       if (res.status === 400) {
         throw new Error();
       }

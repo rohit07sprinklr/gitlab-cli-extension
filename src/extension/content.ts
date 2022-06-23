@@ -36,9 +36,8 @@ function renderMergeButton(sourceBranch, targetBranch) {
     disableButtons();
     try {
       await fetchStream(
-        `http://localhost:4000/merge?location=${
-          window.location
-        }&source=${encodeURIComponent(
+        `http://localhost:4000`,
+        `merge?location=${window.location}&source=${encodeURIComponent(
           sourceBranch!
         )}&target=${encodeURIComponent(targetBranch!)}`,
         "GET",
@@ -144,13 +143,13 @@ async function initialise(
       }
       if (r.status === 400) {
         const jsonResult = await r.json();
-        if(jsonResult['ERROR']){
-          throw new Error(jsonResult['ERROR']);
+        if (jsonResult["ERROR"]) {
+          throw new Error(jsonResult["ERROR"]);
         }
       }
       return false;
     });
-  } catch(e) {
+  } catch (e) {
     console.log(e);
     setContentInDesc(e);
   }

@@ -1,3 +1,5 @@
+import { ajaxClient } from "./ajaxClient";
+
 function streamBody(body, onChunkReceive) {
   const decoder = new TextDecoder("utf-8");
 
@@ -36,23 +38,16 @@ function streamBody(body, onChunkReceive) {
     .then((response) => response.text());
 }
 
-function fetchBuilder(url, method, payload) {
+function fetchBuilder(origin,path, method, payload) {
   if (method === "GET") {
-    return fetch(url);
+    return ajaxClient.GET(origin,path,'','CLIRequest');
   } else if (method === "POST") {
-    return fetch(url, {
-      method: "POST",
-      mode: "cors",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+    return ajaxClient.POST(origin,path,'CLIRequest',payload);
   }
 }
 
-function fetchStream(url, method, payload, onChunkReceive) {
-  return fetchBuilder(url, method, payload)
+function fetchStream(origin,path, method, payload, onChunkReceive) {
+  return fetchBuilder(origin,path, method, payload)
     .then((r) => {
       if (r.status >= 400) {
         return r.text().then((text) => {
