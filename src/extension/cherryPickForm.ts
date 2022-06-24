@@ -40,6 +40,7 @@ function onCherryPickPause(jsonFormdata, commitsCompleted) {
 }
 
 function onCherryPickComplete(commitBranch, targetBranch, url) {
+  enableCherryPickCheckbox();
   const form = document.querySelector(".commit-form");
   const completeButton = document.createElement("button");
 
@@ -167,12 +168,24 @@ function enableAllFormButton() {
     button.removeAttribute("disabled");
   });
 }
+function disableCherryPickCheckbox(){
+  const checkboxes = document.querySelectorAll(".commitCheckbox");
+  checkboxes.forEach((checkbox) => {
+    checkbox.setAttribute("disabled", "true");
+  });
+}
+function enableCherryPickCheckbox(){
+  const checkboxes = document.querySelectorAll(".commitCheckbox");
+  checkboxes.forEach((checkbox) => {
+    checkbox.removeAttribute("disabled");
+  });
+}
 function addFormBody(commit) {
   return `
-<td><input type="checkbox" checked=true style="height:20px;"></td>
-<td><input type="text" class="form-control" id="commitsha" value="${commit.commitSHA}" readonly=true></td>
-<td><input type="text" class="form-control" id="commitdate" value="${commit.commitDate}" readonly=true></td>
-<td><input type="text" class="form-control" id="commitmessage" value="${commit.commitMessage}" readonly=true></td>
+<td><input type="checkbox" checked=true style="height:20px;" class="commitCheckbox"></td>
+<td><input type="text" class="form-control commitsha" value="${commit.commitSHA}" readonly=true></td>
+<td><input type="text" class="form-control commitdate" value="${commit.commitDate}" readonly=true></td>
+<td><input type="text" class="form-control commitmessage" value="${commit.commitMessage}" readonly=true></td>
 `;
 }
 function addFormHeader() {
@@ -231,6 +244,7 @@ function renderForm(commits, url, path, commitBranch, targetBranch) {
     if (completeButton != null) {
       form.removeChild(completeButton);
     }
+    disableCherryPickCheckbox();
     await cherryPickCommits(url, path, commitBranch, targetBranch);
   });
   document.body.appendChild(form);

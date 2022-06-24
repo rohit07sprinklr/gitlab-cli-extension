@@ -22,9 +22,9 @@ Promise.all([
     outfile: "dist/extension/assets/popup.js",
   }),
   esbuild.build({
-    entryPoints: ["src/extension/optionScript.ts"],
+    entryPoints: ["src/extension/profileScript.ts"],
     bundle: true,
-    outfile: "dist/extension/assets/optionScript.js",
+    outfile: "dist/extension/assets/profileScript.js",
   }),
   esbuild.build({
     entryPoints: ["src/server/api.js"],

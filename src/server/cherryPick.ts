@@ -49,7 +49,10 @@ async function cherryPickProcess(req, res) {
         await wait(500);
       }
     } catch (e) {
-      await git(localPath).raw("reset", "--hard");
+      await git(localPath).raw([
+        "cherry-pick",
+        "--abort",
+      ]);
       console.log("Failed");
       res.write(renderPauseMessage(currentCommitSHA, e));
       await wait(100);
