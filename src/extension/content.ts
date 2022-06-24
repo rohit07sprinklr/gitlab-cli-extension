@@ -142,10 +142,7 @@ async function initialise(
         return true;
       }
       if (r.status === 400) {
-        const jsonResult = await r.json();
-        if (jsonResult["ERROR"]) {
-          throw new Error(jsonResult["ERROR"]);
-        }
+        throw new Error(`URL not Found`);
       }
       return false;
     });

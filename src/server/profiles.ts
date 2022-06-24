@@ -1,63 +1,52 @@
-const fs = require("fs");
-const path = require("path");
+import { readConfigFile, writeConfigFile } from "./utils";
 
-import { writeConfigFile } from "./utils";
-
-async function getProfiles(res) {
-  const configPath = path.join(__dirname, "config.json");
-  fs.readFile(configPath, function (err, data) {
-    if (err) {
-      res.status(400).send(err);
-      return;
-    }
-    const jsonData = JSON.parse(data);
-    res.status(200).send(jsonData);
-  });
+async function getProfiles() {
+  try {
+    const profileResponse = await readConfigFile();
+    return profileResponse;
+  } catch (e) {
+    throw e;
+  }
 }
 
-async function addProfile(profileData, res) {
-  const configPath = path.join(__dirname, "config.json");
-  let jsonData;
-  fs.readFile(configPath, function (err, data) {
-    if (err) {
-      jsonData = {};
-      jsonData["repos"] = [];
-    } else {
-      jsonData = JSON.parse(data);
-    }
-    jsonData.repos.push(profileData);
-    writeConfigFile(res, configPath, jsonData);
-  });
+async function addProfile(profileData) {
+  let configJSONData;
+  try {
+    configJSONData = await readConfigFile();
+  } catch {
+    configJSONData = {};
+    configJSONData["repos"] = [];
+  }
+  try {
+    configJSONData.repos.push(profileData);
+    await writeConfigFile(configJSONData);
+  } catch (e) {
+    throw new Error(e.toString());
+  }
 }
 
-async function deleteProfile(profileID, res) {
-  const configPath = path.join(__dirname, "config.json");
-  fs.readFile(configPath, function (err, data) {
-    if (err) {
-      res.status(400).send(err);
-      return;
-    }
-    const jsonData = JSON.parse(data);
+async function deleteProfile(profileID) {
+  try {
+    const configJSONData = await readConfigFile();
     if (profileID > -1) {
-      jsonData.repos.splice(profileID, 1);
+      configJSONData.repos.splice(profileID, 1);
     }
-    writeConfigFile(res, configPath, jsonData);
-  });
+    await writeConfigFile(configJSONData);
+  } catch (e) {
+    throw new Error(e.toString());
+  }
 }
 
-async function updateProfile(profileID, profileData, res) {
-  const configPath = path.join(__dirname, "config.json");
-  fs.readFile(configPath, function (err, data) {
-    if (err) {
-      res.status(400).send(err);
-      return;
-    }
-    const jsonData = JSON.parse(data);
+async function updateProfile(profileID, profileData) {
+  try {
+    const configJSONData = await readConfigFile();
     if (profileID > -1) {
-      jsonData.repos[profileID] = profileData;
+      configJSONData.repos[profileID] = profileData;
     }
-    writeConfigFile(res, configPath, jsonData);
-  });
+    await writeConfigFile(configJSONData);
+  } catch (e) {
+    throw new Error(e.toString());
+  }
 }
 
 export { getProfiles, addProfile, deleteProfile, updateProfile };

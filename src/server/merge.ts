@@ -1,16 +1,9 @@
 const git = require("simple-git");
 
-import {wait,getLocalRepository} from './utils';
+import { wait } from "./utils";
 
-async function mergeProcess(req, res, config) {
+async function mergeProcess(res, source, target, path) {
   try {
-    const { source, target, location } = req.query;
-    const matchedRepo = getLocalRepository(config,location);
-    if(!matchedRepo){
-      res.end("ERROR URL Not Found");
-      return;
-    }
-    const path = matchedRepo.path;
     await wait(100);
     console.log("start merge");
     console.log(`fetching ${source}`);
@@ -53,6 +46,7 @@ async function mergeProcess(req, res, config) {
     console.log("end merge successfully");
     res.end();
   } catch (e) {
+    await wait(100);
     res.write(e.toString());
     console.error(e);
     console.log("End merge failure");

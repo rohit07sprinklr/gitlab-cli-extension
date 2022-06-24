@@ -82,7 +82,8 @@ async function sendCherryPickRequest(jsonFormdata) {
   disableAllFormButton();
   try {
     await fetchStream(
-      `http://localhost:4000`,`cherrypick`,
+      `http://localhost:4000`,
+      `cherrypick`,
       "POST",
       jsonFormdata,
       (chunkString) => {
@@ -137,10 +138,8 @@ async function cherryPickCommits(url, path, commitBranch, targetBranch) {
   };
   jsonFormdata.commits = Array.from(table.rows).reduce(
     (commits, element, rowNumber) => {
-      if (rowNumber > 0) {
+      if (rowNumber > 0 && element.cells[0].firstChild.checked) {
         commits.push({
-          commitID: rowNumber,
-          commitScope: element.cells[0].firstChild.checked,
           commitSHA: element.cells[1].firstChild.value,
         });
       }
@@ -168,13 +167,13 @@ function enableAllFormButton() {
     button.removeAttribute("disabled");
   });
 }
-function disableCherryPickCheckbox(){
+function disableCherryPickCheckbox() {
   const checkboxes = document.querySelectorAll(".commitCheckbox");
   checkboxes.forEach((checkbox) => {
     checkbox.setAttribute("disabled", "true");
   });
 }
-function enableCherryPickCheckbox(){
+function enableCherryPickCheckbox() {
   const checkboxes = document.querySelectorAll(".commitCheckbox");
   checkboxes.forEach((checkbox) => {
     checkbox.removeAttribute("disabled");
@@ -258,6 +257,7 @@ const main = () => {
     const currentURL = getSearchQueryParams("currentURL");
     const formData = new FormData(e.target);
     const jsonFormdata = [...formData].reduce((jsonData, [key, value]) => {
+      if (key === "commitTime") value = value.replace("T", " ");
       jsonData[key] = value;
       return jsonData;
     }, {});
@@ -277,6 +277,10 @@ const main = () => {
         "CLIRequest",
         jsonFormdata
       );
+      if (res.status === 400) {
+        const e = await res.text();
+        throw new Error(e);
+      }
       const jsonResult = await res.json();
       if (jsonResult["ERROR"]) {
         throw new Error(jsonResult["ERROR"]);

@@ -8,51 +8,37 @@ async function cherryPickProcess(req, res) {
     await wait(100);
     if (requestType === "new") {
       try {
-        await git(localPath).listRemote([
-          "--heads",
-          "--exit-code",
-          "origin",
-          commitBranch,
-        ]);
-        //If found on remote repo
         await git(localPath).fetch("origin", commitBranch);
         await git(localPath).checkout(commitBranch);
         await git(localPath).raw("reset", "--hard", `origin/${commitBranch}`);
       } catch {
-        //Niether in local nor remote repo checkout new branch from target branch
         await git(localPath).checkoutBranch(commitBranch, targetBranch);
       }
     } else if (requestType === "continue") {
       await git(localPath).checkout(commitBranch);
     }
-    const gitLogs = req.body.commits;
+    const commitIds = req.body.commits;
     let completedCommits = 0;
     let currentCommitSHA;
     try {
-      for (const gitLog of gitLogs) {
+      for (const commitId of commitIds) {
         completedCommits += 1;
-        currentCommitSHA = gitLog.commitSHA;
-        if (gitLog.commitScope == false) {
-          continue;
-        }
-        res.write(`Cherry pick ${gitLog.commitSHA}`);
+        currentCommitSHA = commitId.commitSHA;
+        res.write(`Cherry pick ${commitId.commitSHA}`);
         const cherryPickResult = await git(localPath).raw([
           "cherry-pick",
           "-m",
           "1",
-          gitLog.commitSHA,
+          commitId.commitSHA,
         ]);
         await wait(500);
-        console.log(`Cherry-pick ${gitLog.commitSHA} Successful`);
+        console.log(`Cherry-pick ${commitId.commitSHA} Successful`);
         console.log(cherryPickResult);
-        res.write(`Cherry-pick ${gitLog.commitSHA} Successful`);
+        res.write(`Cherry-pick ${commitId.commitSHA} Successful`);
         await wait(500);
       }
     } catch (e) {
-      await git(localPath).raw([
-        "cherry-pick",
-        "--abort",
-      ]);
+      await git(localPath).raw(["cherry-pick", "--abort"]);
       console.log("Failed");
       res.write(renderPauseMessage(currentCommitSHA, e));
       await wait(100);

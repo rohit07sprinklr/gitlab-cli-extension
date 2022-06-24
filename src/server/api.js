@@ -2,16 +2,21 @@
 
 const express = require("express");
 const git = require("simple-git");
-const fs = require("fs");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const path = require("path");
 
+import PQueue from "p-queue";
+import { getLocalRepository } from "./utils";
 import { mergeProcess } from "./merge";
 import { getMergeCommits } from "./getMergeCommits";
 import { cherryPickProcess } from "./cherryPick";
-import { getProfiles, addProfile, deleteProfile, updateProfile} from "./profiles";
-import PQueue from "p-queue";
+import {
+  getProfiles,
+  addProfile,
+  deleteProfile,
+  updateProfile,
+} from "./profiles";
+
 const queue = new PQueue({ concurrency: 1 });
 
 const PORT = 4000;
@@ -26,51 +31,49 @@ app.use(cors());
 
 app.get("/handshake", async function (req, res) {
   const { location } = req.query;
-  const configPath = path.join(__dirname, "config.json");
-  fs.readFile(configPath, function (err, data) {
-    if (err) {
-      console.log(`ERROR: Config file missing`);
-      res.writeHead(400, {
-        "Content-Type": "application/json",
-        "access-control-allow-origin": "*",
-      });
-      res.end(JSON.stringify({ ERROR: "Config file missing" }));
-      return;
-    }
-    const config = JSON.parse(data);
-    if (
-      !config.repos ||
-      config.repos.length === 0 ||
-      !config.repos.some((repo) => location.startsWith(repo.url))
-    ) {
-      res.writeHead(400, {
-        "Content-Type": "application/json",
-        "access-control-allow-origin": "*",
-      });
-      console.log(`ERROR: URL Not Found`);
-      res.end(JSON.stringify({ ERROR: "URL Not Found" }));
-      return;
-    }
-    res
-      .writeHead(200, {
-        "access-control-allow-origin": "*",
-      })
-      .end();
-    return;
-  });
+  try {
+    await getLocalRepository(location);
+    res.status(200).end();
+    res.end();
+  } catch (e) {
+    res.status(400).end();
+  }
 });
 
 app.get("/profiles", async function (req, res) {
-  await getProfiles(res);
+  try {
+    const profileResponse = await getProfiles();
+    res.status(200).send(profileResponse);
+  } catch (e) {
+    res.status(400).send(e);
+  }
 });
 app.post("/profiles", async function (req, res) {
-  await addProfile(req.body, res);
+  try {
+    const profileResponse = await addProfile(req.body);
+    res.status(200).send(profileResponse);
+  } catch (e) {
+    res.status(400).send(e);
+  }
 });
 app.delete("/profiles", async function (req, res) {
-  await deleteProfile(req.body.id, res);
+  try {
+    const profileResponse = await deleteProfile(req.body.id);
+    res.status(200).send(profileResponse);
+  } catch (e) {
+    res.status(400).send(e);
+  }
 });
-app.put('/profiles', async function (req,res){
-  await updateProfile(req.body.id, req.body.profileData, res);
+app.put("/profiles", async function (req, res) {
+  try {
+    const profileResponse = await updateProfile(
+      req.body.id,
+      req.body.profileData
+    );
+    res.status(200).send(profileResponse);
+  } catch (e) {
+    res.status(400).send(e);
+  }
 });
 
 app.get("/merge", async function (req, res) {
@@ -79,17 +82,16 @@ app.get("/merge", async function (req, res) {
     "Transfer-Encoding": "chunked",
     "access-control-allow-origin": "*",
   });
-  res.write(`Merge Queued `);
-  const configPath = path.join(__dirname, "config.json");
-  fs.readFile(configPath, function (err, data) {
-    if (err) {
-      console.log(`ERROR: Config file missing`);
-      res.end("ERROR Config file missing");
-      return;
-    }
-    const jsonData = JSON.parse(data);
-    queue.add(async () => await mergeProcess(req, res, jsonData));
-  });
+  try {
+    const { source, target, location } = req.query;
+    const localRepo = await getLocalRepository(location);
+    res.write(`Merge Queued `);
+    queue.add(
+      async () => await mergeProcess(res, source, target, localRepo.path)
+    );
+  } catch (e) {
+    res.write(e.toString());
+  }
 });
 
 app.post("/cherrypick", async function (req, res) {
@@ -103,20 +105,22 @@ app.post("/cherrypick", async function (req, res) {
 });
 
 app.post("/mergecommits", async function (req, res) {
-  res.writeHead(200, {
-    "Content-Type": "application/json",
-    "access-control-allow-origin": "*",
-  });
-  const configPath = path.join(__dirname, "config.json");
-  fs.readFile(configPath, function (err, data) {
-    if (err) {
-      console.log(`ERROR: Config file missing`);
-      res.end(JSON.stringify({ ERROR: "Config file missing" }));
-      return;
-    }
-    const jsonData = JSON.parse(data);
-    getMergeCommits(req, res, jsonData);
-  });
+  try {
+    const { commitAuthor, commitTime, location } = req.body;
+    const localRepo = await getLocalRepository(location);
+    const jsonResponse = await getMergeCommits(
+      commitAuthor,
+      commitTime,
+      localRepo
+    );
+    res.writeHead(200, {
+      "Content-Type": "application/json",
+      "access-control-allow-origin": "*",
+    });
+    res.end(JSON.stringify(jsonResponse));
+  } catch (e) {
+    res.status(400).end(e.toString());
+  }
 });
 
 app.listen(PORT, () => {

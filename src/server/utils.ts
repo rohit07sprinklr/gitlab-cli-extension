@@ -1,37 +1,44 @@
-const fs = require("fs");
+const fs = require("fs").promises;
+const path = require("path");
 
 export function wait(millis) {
   return new Promise((res) => setTimeout(res, millis));
 }
-export function getLocalRepository(config, location) {
-  if (!config.repos || config.repos.length === 0) {
-    console.log(`ERROR: URL Not Found`);
-    return null;
+
+export async function readConfigFile() {
+  try {
+    const configPath = path.join(__dirname, "config.json");
+    const configData = await fs.readFile(configPath);
+    return JSON.parse(configData);
+  } catch (e) {
+    throw new Error(e.toString());
   }
-  const matchedRepo = config.repos.find((repo) =>
-    location.startsWith(repo.url)
-  );
-  if (!matchedRepo) {
-    console.log(`ERROR: URL Not Found`);
-    return null;
-  }
-  return matchedRepo;
 }
-export function writeConfigFile(res, configPath, jsonData) {
-  fs.writeFile(
-    configPath,
-    JSON.stringify(jsonData),
-    {
-      encoding: "utf8",
-      flag: "w",
-      mode: 0o666,
-    },
-    (err) => {
-      if (err) res.status(400).send(err);
-      else res.status(200).send(jsonData);
+
+export async function writeConfigFile(configJSONData) {
+  try {
+    const configPath = path.join(__dirname, "config.json");
+    await fs.writeFile(configPath, JSON.stringify(configJSONData));
+  } catch (e) {
+    throw new Error(e.toString());
+  }
+}
+
+export async function getLocalRepository(location) {
+  try {
+    const config = await readConfigFile();
+    const matchedRepo = config.repos.find((repo) =>
+      location.startsWith(repo.url)
+    );
+    if (!matchedRepo) {
+      throw Error();
     }
-  );
+    return matchedRepo;
+  } catch {
+    throw new Error(`URL not Found`);
+  }
 }
+
 export function renderPauseMessage(currentCommitSHA, e) {
   return `
   <strong> Automatic Cherry-pick ${currentCommitSHA} Failed: You can still cherry-pick this commit manually. 
