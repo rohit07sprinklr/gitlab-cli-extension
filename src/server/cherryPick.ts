@@ -47,7 +47,8 @@ async function cherryPickProcess(req, res) {
       console.log(e);
       return;
     }
-    //git push --set-upstream origin feature/cherry-pick
+    // res.write(`Pushing ${commitBranch}`);
+    // await git(localPath).push("origin", commitBranch);
     res.write("COMPLETED Cherry-Pick");
     res.end();
   } catch (e) {

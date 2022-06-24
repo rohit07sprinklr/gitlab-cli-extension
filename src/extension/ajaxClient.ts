@@ -21,7 +21,8 @@ async function fetchAPIBuilder(method, path, ORIGIN, csrf_token) {
     credentials: "include",
   });
 }
-async function fetchCLIBuilder(method, path, ORIGIN, jsonInputBody) {
+async function fetchCLIBuilder(method, path, jsonInputBody) {
+  const ORIGIN = "http://localhost:4000";
   if (method === "GET") {
     return fetch(`${ORIGIN}/${path}`);
   }
@@ -34,19 +35,37 @@ async function fetchCLIBuilder(method, path, ORIGIN, jsonInputBody) {
     body: JSON.stringify(jsonInputBody),
   });
 }
-export async function GET(ORIGN, path, csrf_token, requestType) {
+
+export async function GET({
+  ORIGIN = "http://localhost:400",
+  path,
+  csrf_token = "",
+  requestType,
+}) {
   if (requestType === "APIRequest") {
-    return fetchAPIBuilder("GET", path, ORIGN, csrf_token);
+    return fetchAPIBuilder("GET", path, ORIGIN, csrf_token);
   }
-  return fetchCLIBuilder("GET", path, ORIGN, null);
+  return fetchCLIBuilder("GET", path);
 }
-export async function POST(ORIGN, path, requestType, jsonInputBody) {
-  return fetchCLIBuilder("POST", path, ORIGN, jsonInputBody);
+export async function POST({
+  path,
+  jsonInputBody,
+  requestType = "CLIRequest",
+}) {
+  return fetchCLIBuilder("POST", path, jsonInputBody);
 }
-export async function DELETE(ORIGN, path, requestType, jsonInputBody) {
-  return fetchCLIBuilder("DELETE", path, ORIGN, jsonInputBody);
+export async function DELETE({
+  path,
+  jsonInputBody,
+  requestType = "CLIRequest",
+}) {
+  return fetchCLIBuilder("DELETE", path, jsonInputBody);
 }
-export async function PUT(ORIGN, path, requestType, jsonInputBody) {
-  return fetchCLIBuilder("PUT", path, ORIGN, jsonInputBody);
+export async function PUT({ 
+  path, 
+  jsonInputBody, 
+  requestType = "CLIRequest" 
+}) {
+  return fetchCLIBuilder("PUT", path, jsonInputBody);
 }
 export * as ajaxClient from "./ajaxClient";

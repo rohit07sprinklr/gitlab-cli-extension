@@ -81,44 +81,38 @@ function onCherryPickComplete(commitBranch, targetBranch, url) {
 async function sendCherryPickRequest(jsonFormdata) {
   disableAllFormButton();
   try {
-    await fetchStream(
-      `http://localhost:4000`,
-      `cherrypick`,
-      "POST",
-      jsonFormdata,
-      (chunkString) => {
-        if (chunkString.toLowerCase().startsWith("paused")) {
-          const commitsCompleted = Number(
-            chunkString.slice(chunkString.indexOf("{") + 1, -1)
-          );
-          if (commitsCompleted > jsonFormdata.commits.length) {
-            return;
-          }
-          const newJsonFormData = onCherryPickPause(
-            jsonFormdata,
-            commitsCompleted
-          );
-          addContinueButton(newJsonFormData);
-          addStopButton();
-          const copyButton = document.querySelector(".copy-button");
-          if (copyButton) {
-            copyButton.addEventListener("click", () => {
-              const copyText = document.getElementById("gitCopyMessage");
-              navigator.clipboard.writeText(copyText.innerText);
-            });
-          }
-        } else if (chunkString.toLowerCase().startsWith("completed")) {
-          setHTMLContentInDesc(chunkString);
-          onCherryPickComplete(
-            jsonFormdata.commitBranch,
-            jsonFormdata.targetBranch,
-            jsonFormdata.url
-          );
-        } else {
-          setHTMLContentInDesc(chunkString);
+    await fetchStream(`cherrypick`, "POST", jsonFormdata, (chunkString) => {
+      if (chunkString.toLowerCase().startsWith("paused")) {
+        const commitsCompleted = Number(
+          chunkString.slice(chunkString.indexOf("{") + 1, -1)
+        );
+        if (commitsCompleted > jsonFormdata.commits.length) {
+          return;
         }
+        const newJsonFormData = onCherryPickPause(
+          jsonFormdata,
+          commitsCompleted
+        );
+        addContinueButton(newJsonFormData);
+        addStopButton();
+        const copyButton = document.querySelector(".copy-button");
+        if (copyButton) {
+          copyButton.addEventListener("click", () => {
+            const copyText = document.getElementById("gitCopyMessage");
+            navigator.clipboard.writeText(copyText.innerText);
+          });
+        }
+      } else if (chunkString.toLowerCase().startsWith("completed")) {
+        setHTMLContentInDesc(chunkString);
+        onCherryPickComplete(
+          jsonFormdata.commitBranch,
+          jsonFormdata.targetBranch,
+          jsonFormdata.url
+        );
+      } else {
+        setHTMLContentInDesc(chunkString);
       }
-    ).then((res) => {
+    }).then((res) => {
       if (!document.querySelector(".btn-continue")) {
         enableAllFormButton();
       }
@@ -256,13 +250,13 @@ const main = () => {
     disableAllFormButton();
     const currentURL = getSearchQueryParams("currentURL");
     const formData = new FormData(e.target);
-    const jsonFormdata = [...formData].reduce((jsonData, [key, value]) => {
+    const jsonInputBody = [...formData].reduce((jsonData, [key, value]) => {
       if (key === "commitTime") value = value.replace("T", " ");
       jsonData[key] = value;
       return jsonData;
     }, {});
 
-    jsonFormdata["location"] = currentURL;
+    jsonInputBody["location"] = currentURL;
 
     const commitForm = document.querySelector(".commit-form");
     if (commitForm != null) {
@@ -271,12 +265,10 @@ const main = () => {
 
     setHTMLContentInDesc(`Fetching Merge Commits`);
     try {
-      const res = await ajaxClient.POST(
-        `http://localhost:4000`,
-        `mergecommits`,
-        "CLIRequest",
-        jsonFormdata
-      );
+      const res = await ajaxClient.POST({
+        path: `mergecommits`,
+        jsonInputBody,
+      });
       if (res.status === 400) {
         const e = await res.text();
         throw new Error(e);
@@ -290,8 +282,8 @@ const main = () => {
         jsonResult.commits,
         jsonResult.url,
         jsonResult.path,
-        jsonFormdata.commitBranch,
-        jsonFormdata.targetBranch
+        jsonInputBody.commitBranch,
+        jsonInputBody.targetBranch
       );
     } catch (e) {
       enableAllFormButton();

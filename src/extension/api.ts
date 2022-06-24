@@ -4,14 +4,14 @@ async function getMergeRequestInfo(repoURLName, mergeRequestID) {
   const csrf_token = document.querySelector('[name="csrf-token"]').content;
   const currentURL = new URL(window.location);
   const ORIGIN = currentURL.origin;
-  const res = await ajaxClient.GET(
+  const res = await ajaxClient.GET({
     ORIGIN,
-    `projects/${encodeURIComponent(
+    path: `projects/${encodeURIComponent(
       repoURLName
     )}/merge_requests/${mergeRequestID}?include_rebase_in_progress=true`,
     csrf_token,
-    "APIRequest"
-  );
+    requestType: "APIRequest",
+  });
   const jsonResponse = await res.json();
   return {
     sourceBranch: jsonResponse.source_branch,
@@ -27,16 +27,16 @@ async function isOpenMergeRequest(
   csrf_token,
   sourceBranch,
   targetBranch,
-  origin
+  ORIGIN
 ) {
-  const res = await ajaxClient.GET(
-    origin,
-    `projects/${encodeURIComponent(
+  const res = await ajaxClient.GET({
+    ORIGIN,
+    path: `projects/${encodeURIComponent(
       repoURLName
     )}/merge_requests?state=opened&source_branch=${sourceBranch}&target_branch=${targetBranch}`,
     csrf_token,
-    "APIRequest"
-  );
+    requestType: "APIRequest",
+  });
   const jsonResponse = await res.json();
   return jsonResponse;
 }

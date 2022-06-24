@@ -38,16 +38,22 @@ function streamBody(body, onChunkReceive) {
     .then((response) => response.text());
 }
 
-function fetchBuilder(origin,path, method, payload) {
+function fetchBuilder(path, method, payload) {
   if (method === "GET") {
-    return ajaxClient.GET(origin,path,'','CLIRequest');
+    return ajaxClient.GET({
+      path,
+      requestType: "CLIRequest",
+    });
   } else if (method === "POST") {
-    return ajaxClient.POST(origin,path,'CLIRequest',payload);
+    return ajaxClient.POST({
+      path,
+      jsonInputBody: payload,
+    });
   }
 }
 
-function fetchStream(origin,path, method, payload, onChunkReceive) {
-  return fetchBuilder(origin,path, method, payload)
+function fetchStream(path, method, payload, onChunkReceive) {
+  return fetchBuilder(path, method, payload)
     .then((r) => {
       if (r.status >= 400) {
         return r.text().then((text) => {

@@ -10,13 +10,11 @@ function setContentInDesc(content) {
   el.textContent = content;
 }
 async function deleteProfile(profileNumber) {
-  const jsonFormdata = { id: profileNumber };
-  const res = await ajaxClient.DELETE(
-    `http://localhost:4000`,
-    `profiles`,
-    "CLIRequest",
-    jsonFormdata
-  );
+  const jsonInputBody = { id: profileNumber };
+  const res = await ajaxClient.DELETE({
+    path: "profiles",
+    jsonInputBody,
+  });
   if (res.status === 400) {
     setContentInDesc(`Delete Failed`);
     return;
@@ -24,13 +22,11 @@ async function deleteProfile(profileNumber) {
   renderProfiles();
 }
 async function updateProfile(profileNumber, profileData) {
-  const jsonFormdata = { id: profileNumber, profileData };
-  const res = await ajaxClient.PUT(
-    `http://localhost:4000`,
-    `profiles`,
-    "CLIRequest",
-    jsonFormdata
-  );
+  const jsonInputBody = { id: profileNumber, profileData };
+  const res = await ajaxClient.PUT({
+    path: "profiles",
+    jsonInputBody,
+  });
   if (res.status === 400) {
     setContentInDesc(`Update Failed`);
     return;
@@ -61,12 +57,10 @@ function renderEditProfileButton(buttonType) {
 }
 async function renderProfiles() {
   try {
-    const res = await ajaxClient.GET(
-      `http://localhost:4000`,
-      `profiles`,
-      "",
-      "CLIRequest"
-    );
+    const res = await ajaxClient.GET({
+      path: "profiles",
+      requestType: "CLIRequest",
+    });
     if (res.status === 400) {
       throw new Error(`Config File Missing`);
     }
@@ -96,7 +90,7 @@ async function renderProfiles() {
 
     const tableHead = document.createElement("thead");
     table.appendChild(tableHead);
-    
+
     const formHeader = document.createElement("tr");
     formHeader.innerHTML = addFormHeader();
     tableHead.appendChild(formHeader);
@@ -168,18 +162,16 @@ function AddProfile() {
   addProfileForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const jsonFormdata = [...formData].reduce((jsonData, [key, value]) => {
+    const jsonInputBody = [...formData].reduce((jsonData, [key, value]) => {
       jsonData[key] = value;
       return jsonData;
     }, {});
     setContentInDesc(`Adding Profile`);
     try {
-      const res = await ajaxClient.POST(
-        `http://localhost:4000`,
-        `profiles`,
-        "CLIRequest",
-        jsonFormdata
-      );
+      const res = await ajaxClient.POST({
+        path: "profiles",
+        jsonInputBody,
+      });
       if (res.status === 400) {
         throw new Error();
       }

@@ -9,6 +9,7 @@ import {
 } from "./constants/domClasses";
 
 import { getMergeRequestInfo } from "./api";
+import { ajaxClient } from "./ajaxClient";
 
 function renderButton() {
   const button = document.createElement("button");
@@ -36,7 +37,6 @@ function renderMergeButton(sourceBranch, targetBranch) {
     disableButtons();
     try {
       await fetchStream(
-        `http://localhost:4000`,
         `merge?location=${window.location}&source=${encodeURIComponent(
           sourceBranch!
         )}&target=${encodeURIComponent(targetBranch!)}`,
@@ -132,20 +132,23 @@ async function initialise(
   disableButtons();
   mergeButton.classList.remove(GITLAB_CLI_BUTTON);
   try {
-    await fetch(
-      `http://localhost:4000/handshake?location=${window.location}`
-    ).then(async (r) => {
-      if (r.status === 200) {
-        const mergeButton = document.getElementById("gitlab-cli-merge");
-        mergeButton.classList.add(GITLAB_CLI_BUTTON);
-        enableButtons();
-        return true;
-      }
-      if (r.status === 400) {
-        throw new Error(`URL not Found`);
-      }
-      return false;
-    });
+    await ajaxClient
+      .GET({
+        path: `handshake?location=${window.location}`,
+        requestType: "CLIRequest",
+      })
+      .then(async (r) => {
+        if (r.status === 200) {
+          const mergeButton = document.getElementById("gitlab-cli-merge");
+          mergeButton.classList.add(GITLAB_CLI_BUTTON);
+          enableButtons();
+          return true;
+        }
+        if (r.status === 400) {
+          throw new Error(`URL not Found`);
+        }
+        return false;
+      });
   } catch (e) {
     console.log(e);
     setContentInDesc(e);
