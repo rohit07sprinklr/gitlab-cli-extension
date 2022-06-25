@@ -40,8 +40,9 @@ function onCherryPickPause(jsonFormdata, commitsCompleted) {
 }
 
 function onCherryPickComplete(commitBranch, targetBranch, url) {
-  enableCherryPickCheckbox();
+  const submitCherryPickRequestButton = document.querySelector(".btn-cherry-pick");
   const form = document.querySelector(".commit-form");
+  form.removeChild(submitCherryPickRequestButton);
   const completeButton = document.createElement("button");
 
   completeButton.classList.add("btn", "btn-outline-primary", "btn-complete");
@@ -63,9 +64,9 @@ function onCherryPickComplete(commitBranch, targetBranch, url) {
       );
       if (projectInfo.length === 0) {
         window.open(
-          `${url}/-/merge_requests/new?create_cherrypick_commit=true&target_branch=${encodeURIComponent(
-            targetBranch
-          )}&commit_branch=${encodeURIComponent(commitBranch)}`
+          `${url}/-/merge_requests/new?merge_request%5Bsource_branch%5D=${encodeURIComponent(
+            commitBranch
+          )}`
         );
       } else {
         setHTMLContentInDesc(
@@ -165,12 +166,6 @@ function disableCherryPickCheckbox() {
   const checkboxes = document.querySelectorAll(".commitCheckbox");
   checkboxes.forEach((checkbox) => {
     checkbox.setAttribute("disabled", "true");
-  });
-}
-function enableCherryPickCheckbox() {
-  const checkboxes = document.querySelectorAll(".commitCheckbox");
-  checkboxes.forEach((checkbox) => {
-    checkbox.removeAttribute("disabled");
   });
 }
 function addFormBody(commit) {

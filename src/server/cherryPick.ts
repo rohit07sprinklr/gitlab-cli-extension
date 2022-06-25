@@ -7,6 +7,8 @@ async function cherryPickProcess(req, res) {
     const { localPath, commitBranch, targetBranch, requestType } = req.body;
     await wait(100);
     if (requestType === "new") {
+      await git(localPath).fetch("origin", targetBranch);
+      await git(localPath).checkout(targetBranch);
       try {
         await git(localPath).fetch("origin", commitBranch);
         await git(localPath).checkout(commitBranch);
@@ -47,8 +49,8 @@ async function cherryPickProcess(req, res) {
       console.log(e);
       return;
     }
-    // res.write(`Pushing ${commitBranch}`);
-    // await git(localPath).push("origin", commitBranch);
+    res.write(`Pushing ${commitBranch}`);
+    await git(localPath).push("origin", commitBranch);
     res.write("COMPLETED Cherry-Pick");
     res.end();
   } catch (e) {

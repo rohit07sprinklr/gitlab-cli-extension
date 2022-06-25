@@ -199,6 +199,9 @@ const main = () => {
     return;
   }
   const targetNode = document.querySelector(".issuable-discussion");
+  if(!targetNode){
+    return;
+  }
   const config = { childList: true, subtree: true };
 
   const callback = function (mutationList, observer) {

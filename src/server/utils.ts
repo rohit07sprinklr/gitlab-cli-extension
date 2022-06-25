@@ -49,5 +49,6 @@ export function renderPauseMessage(currentCommitSHA, e) {
       <button type="button" class="copy-button"><img src="../clipboard.svg"></img></button>
       <b id="gitCopyMessage"> git cherry-pick -m 1 ${currentCommitSHA}</b>
     </div>
-  </div>${e.toString()}`;
+  </div>
+  <div class="cherrypick-error-desc">${e.toString()}</div>`;
 }

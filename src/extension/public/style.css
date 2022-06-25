@@ -48,3 +48,8 @@ h2 {
   padding: 0;
   background: none;
 }
+.cherrypick-error-desc{
+  max-height: 75px;
+  word-break: break-all;
+  overflow-y: scroll;
+}
