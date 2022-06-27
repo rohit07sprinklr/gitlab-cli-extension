@@ -42,6 +42,7 @@ h2 {
   border-radius: 4px;
   box-sizing: border-box;
   font-size: 15px;
+  word-break: break-all;
 }
 .copy-button{
   border: none;
@@ -49,7 +50,11 @@ h2 {
   background: none;
 }
 .cherrypick-error-desc{
-  max-height: 75px;
+  max-height: 150px;
   word-break: break-all;
   overflow-y: scroll;
+}
+.card{
+  margin-top: 8px;
+  margin-bottom: 8px;
 }

@@ -9,14 +9,14 @@ function addContinueButton(newJsonFormData) {
   continueButton.innerText = "Continue";
   continueButton.style.marginLeft = "10px";
   continueButton.setAttribute("type", "button");
-  const form = document.querySelector(".commit-form");
+  const buttonGroup = document.querySelector(".button-group");
   continueButton.addEventListener("click", async () => {
-    form.removeChild(continueButton);
+    buttonGroup.removeChild(continueButton);
     const stopButton = document.querySelector(".btn-stop");
-    if (stopButton != null) form.removeChild(stopButton);
+    if (stopButton != null) buttonGroup.removeChild(stopButton);
     sendCherryPickRequest(newJsonFormData);
   });
-  form.appendChild(continueButton);
+  buttonGroup.appendChild(continueButton);
 }
 
 function addStopButton() {
@@ -28,8 +28,8 @@ function addStopButton() {
   stopButton.addEventListener("click", () => {
     window.location.reload();
   });
-  const form = document.querySelector(".commit-form");
-  form.appendChild(stopButton);
+  const buttonGroup = document.querySelector(".button-group");
+  buttonGroup.appendChild(stopButton);
 }
 
 function onCherryPickPause(jsonFormdata, commitsCompleted) {
@@ -41,8 +41,8 @@ function onCherryPickPause(jsonFormdata, commitsCompleted) {
 
 function onCherryPickComplete(commitBranch, targetBranch, url) {
   const submitCherryPickRequestButton = document.querySelector(".btn-cherry-pick");
-  const form = document.querySelector(".commit-form");
-  form.removeChild(submitCherryPickRequestButton);
+  const buttonGroup = document.querySelector(".button-group");
+  buttonGroup.removeChild(submitCherryPickRequestButton);
   const completeButton = document.createElement("button");
 
   completeButton.classList.add("btn", "btn-outline-primary", "btn-complete");
@@ -70,14 +70,14 @@ function onCherryPickComplete(commitBranch, targetBranch, url) {
         );
       } else {
         setHTMLContentInDesc(
-          `<strong>There already exist a OPEN Merge Request from ${commitBranch} to ${targetBranch}</strong>`
+          `<strong>There already exist a OPEN Merge Request from ${commitBranch} to ${targetBranch}. Check Merge Request ${projectInfo[0].iid}</strong>`
         );
       }
     } catch (e) {
       setHTMLContentInDesc(e.toString());
     }
   });
-  form.appendChild(completeButton);
+  buttonGroup.appendChild(completeButton);
 }
 async function sendCherryPickRequest(jsonFormdata) {
   disableAllFormButton();
@@ -215,7 +215,9 @@ function renderForm(commits, url, path, commitBranch, targetBranch) {
     tableBody.append(tableRow);
     tableRow.innerHTML = addFormBody(commit);
   });
-
+  const buttonGroup = document.createElement("div");
+  buttonGroup.style.marginTop = "20px";
+  buttonGroup.classList.add("button-group");
   const submitCherryPickRequestButton = document.createElement("button");
   submitCherryPickRequestButton.classList.add(
     "btn",
@@ -224,13 +226,14 @@ function renderForm(commits, url, path, commitBranch, targetBranch) {
   );
   submitCherryPickRequestButton.setAttribute("type", "submit");
   submitCherryPickRequestButton.innerText = "Cherry Pick";
-  form.appendChild(submitCherryPickRequestButton);
+  buttonGroup.appendChild(submitCherryPickRequestButton);
+  form.appendChild(buttonGroup);
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const completeButton = document.querySelector(".btn-complete");
     if (completeButton != null) {
-      form.removeChild(completeButton);
+      buttonGroup.removeChild(completeButton);
     }
     disableCherryPickCheckbox();
     await cherryPickCommits(url, path, commitBranch, targetBranch);

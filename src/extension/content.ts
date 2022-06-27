@@ -55,8 +55,7 @@ function renderMergeButton(sourceBranch, targetBranch) {
       button.textContent = "Retry Merge";
     }
   };
-  const buttonGroup = document.querySelector(".mr-widget-section .d-flex");
-  buttonGroup.appendChild(button);
+  return button;
 }
 
 function renderDescription() {
@@ -73,7 +72,7 @@ function renderDescription() {
   return descriptionAreaEl;
 }
 
-function render() {
+function render(sourceBranch, targetBranch) {
   const rootDiv = document.createElement("div");
   rootDiv.style.display = "flex";
   rootDiv.style.flexDirection = "column";
@@ -81,12 +80,14 @@ function render() {
   rootDiv.style.marginRight = "auto";
   rootDiv.style.marginTop = "16px";
   rootDiv.classList.add("mr-widget-heading", "append-bottom-default");
-  rootDiv.style.border = "none";
+  rootDiv.style.border = "1px solid #e5e5e5";
 
   const containerDiv = document.createElement("div");
   containerDiv.classList.add("mr-widget-content");
 
   const buttonGroup = document.createElement("div");
+  const mergeButton = renderMergeButton(sourceBranch, targetBranch);
+  buttonGroup.appendChild(mergeButton);
   buttonGroup.classList.add("d-flex");
 
   containerDiv.appendChild(buttonGroup);
@@ -122,15 +123,11 @@ async function initialise(
   targetBranch,
   isRebaseInProgress
 ) {
-  const referenceEl = document.querySelector(MR_WIDGET_SECTION);
-  const el = render();
+  const referenceEl = document.querySelector('.mr-state-widget');
+  const el = render(sourceBranch, targetBranch);
   referenceEl.classList.add("mr-widget-workflow");
-  referenceEl.prepend(el);
-
-  renderMergeButton(sourceBranch, targetBranch);
-  const mergeButton = document.getElementById("gitlab-cli-merge");
+  referenceEl.append(el);  
   disableButtons();
-  mergeButton.classList.remove(GITLAB_CLI_BUTTON);
   try {
     await ajaxClient
       .GET({
@@ -140,18 +137,17 @@ async function initialise(
       .then(async (r) => {
         if (r.status === 200) {
           const mergeButton = document.getElementById("gitlab-cli-merge");
-          mergeButton.classList.add(GITLAB_CLI_BUTTON);
           enableButtons();
           return true;
         }
         if (r.status === 400) {
-          throw new Error(`URL not Found`);
+          setContentInDesc(`URL not Found`);
         }
         return false;
       });
   } catch (e) {
     console.log(e);
-    setContentInDesc(e);
+    setContentInDesc(`Server not Initialised`);
   }
 }
 

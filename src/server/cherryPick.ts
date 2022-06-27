@@ -14,7 +14,12 @@ async function cherryPickProcess(req, res) {
         await git(localPath).checkout(commitBranch);
         await git(localPath).raw("reset", "--hard", `origin/${commitBranch}`);
       } catch {
-        await git(localPath).checkoutBranch(commitBranch, targetBranch);
+        try{
+          await git(localPath).checkout(commitBranch);
+        }
+        catch{
+          await git(localPath).checkoutBranch(commitBranch, targetBranch);
+        }
       }
     } else if (requestType === "continue") {
       await git(localPath).checkout(commitBranch);
