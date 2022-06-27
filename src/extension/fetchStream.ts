@@ -1,3 +1,5 @@
+import { ajaxClient } from "./ajaxClient";
+
 function streamBody(body, onChunkReceive) {
   const decoder = new TextDecoder("utf-8");
 
@@ -19,7 +21,7 @@ function streamBody(body, onChunkReceive) {
             // Enqueue the next data chunk into our target stream
             controller.enqueue(value);
             const chunkString = decoder.decode(value, { stream: true });
-            if (chunkString.toLowerCase().startsWith('error')) {
+            if (chunkString.toLowerCase().startsWith("error")) {
               onChunkReceive(chunkString);
               throw Error(chunkString);
             }
@@ -33,24 +35,25 @@ function streamBody(body, onChunkReceive) {
       });
     })
     .then((rs) => new Response(rs))
-    .then((response) => response.text())
+    .then((response) => response.text());
 }
-function fetchBuilder(url, method, payload) {
+
+function fetchBuilder(path, method, payload) {
   if (method === "GET") {
-    return fetch(url);
+    return ajaxClient.GET({
+      path,
+      requestType: "CLIRequest",
+    });
   } else if (method === "POST") {
-    return fetch(url, {
-      method: "POST",
-      mode: "cors",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
+    return ajaxClient.POST({
+      path,
+      jsonInputBody: payload,
     });
   }
 }
-function fetchStream(url, method, payload, onChunkReceive) {
-  return fetchBuilder(url, method, payload)
+
+function fetchStream(path, method, payload, onChunkReceive) {
+  return fetchBuilder(path, method, payload)
     .then((r) => {
       if (r.status >= 400) {
         return r.text().then((text) => {
@@ -58,16 +61,9 @@ function fetchStream(url, method, payload, onChunkReceive) {
         });
       }
       return r.body;
-    }).catch(e=>{
-      onChunkReceive(e);
-      throw e;
     })
     .catch((e) => {
-      onChunkReceive(e);
-      throw e;
-    })
-    .catch((e) => {
-      onChunkReceive(e);
+      onChunkReceive(e.toString());
       throw e;
     })
     .then((body) => streamBody(body, onChunkReceive));

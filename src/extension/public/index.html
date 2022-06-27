@@ -7,28 +7,16 @@
       integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
       crossorigin="anonymous"
     />
-    <style>
-      body {
-        min-width: 280px;
-      }
-      .app-header {
-        padding: 5px;
-        background-color: rgb(41, 41, 97);
-        text-align: center;
-        color: white;
-        margin-bottom: 10px;
-      }
-      button {
-        width: fit-content;
-        margin:10px;
-      }
-    </style>
     <script src="assets/popup.js" defer></script>
+    <link rel="stylesheet" type="text/css" href="./indexStyle.css" />
   </head>
   <body>
     <div class="app-header">
       <h2>GitLab CLI Extension</h2>
     </div>
+    <div style="display: flex;justify-content: space-between;">
     <button class="btn btn-primary" id="btn-cherry-pick">Cherry pick</button>
+    <button class="btn btn-primary" id="btn-options">Profiles</button>
+  </div>
   </body>
 </html>

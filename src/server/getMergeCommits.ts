@@ -1,34 +1,34 @@
 const git = require("simple-git");
 
-async function getMergeCommits(req, res, config) {
+async function getMergeCommits(commitAuthor, commitTime, localRepo) {
   try {
-    const { commitAuthor, commitBranch, commitTime, location } = req.body;
-    const path = config.repos.find((repo) =>
-      location.startsWith(repo.url)
-    ).path;
+    const path = localRepo.path;
+    const url = localRepo.url;
+    console.log(`Fetching Merge Commits`);
+    await git(path).fetch();
     const commitTimeFormatted = commitTime.replace("T", " ");
     const resp = await git(path).raw([
       "log",
       "--pretty=format:%h--%ad--%s",
       "--author",
-      `${commitAuthor}`,
+      commitAuthor,
       "--remotes",
       "--merges",
       "--since",
-      `${commitTimeFormatted}`,
+      commitTimeFormatted,
     ]);
     const jsonResponse = {};
     jsonResponse["commits"] = [];
     if (!resp.trim()) {
-      res.end(JSON.stringify(jsonResponse));
-      console.log("No Commits Found!");
-      return;
+      return jsonResponse;
     }
     const result = resp.split("\n");
-    const gitLogs = result.reverse();
+    console.log(`${result.length} commits found`);
+    const commitlogs = result.reverse();
     jsonResponse["path"] = path;
-    for (const gitLog of gitLogs) {
-      const commitInfo = gitLog.split("--");
+    jsonResponse["url"] = url;
+    for (const commitlog of commitlogs) {
+      const commitInfo = commitlog.split("--");
       const commitJSONdata = {
         commitSHA: commitInfo[0],
         commitDate: commitInfo[1],
@@ -36,10 +36,9 @@ async function getMergeCommits(req, res, config) {
       };
       jsonResponse["commits"].push(commitJSONdata);
     }
-    res.end(JSON.stringify(jsonResponse));
+    return jsonResponse;
   } catch (e) {
-    console.log(e);
-    res.end();
+    throw e;
   }
 }
 

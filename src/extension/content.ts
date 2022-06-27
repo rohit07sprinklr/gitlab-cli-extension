@@ -9,6 +9,7 @@ import {
 } from "./constants/domClasses";
 
 import { getMergeRequestInfo } from "./api";
+import { ajaxClient } from "./ajaxClient";
 
 function renderButton() {
   const button = document.createElement("button");
@@ -36,9 +37,7 @@ function renderMergeButton(sourceBranch, targetBranch) {
     disableButtons();
     try {
       await fetchStream(
-        `http://localhost:4000/merge?location=${
-          window.location
-        }&source=${encodeURIComponent(
+        `merge?location=${window.location}&source=${encodeURIComponent(
           sourceBranch!
         )}&target=${encodeURIComponent(targetBranch!)}`,
         "GET",
@@ -56,8 +55,7 @@ function renderMergeButton(sourceBranch, targetBranch) {
       button.textContent = "Retry Merge";
     }
   };
-  const buttonGroup = document.querySelector(".mr-widget-section .d-flex");
-  buttonGroup.appendChild(button);
+  return button;
 }
 
 function renderDescription() {
@@ -74,7 +72,7 @@ function renderDescription() {
   return descriptionAreaEl;
 }
 
-function render() {
+function render(sourceBranch, targetBranch) {
   const rootDiv = document.createElement("div");
   rootDiv.style.display = "flex";
   rootDiv.style.flexDirection = "column";
@@ -82,12 +80,14 @@ function render() {
   rootDiv.style.marginRight = "auto";
   rootDiv.style.marginTop = "16px";
   rootDiv.classList.add("mr-widget-heading", "append-bottom-default");
-  rootDiv.style.border = "none";
+  rootDiv.style.border = "1px solid #e5e5e5";
 
   const containerDiv = document.createElement("div");
   containerDiv.classList.add("mr-widget-content");
 
   const buttonGroup = document.createElement("div");
+  const mergeButton = renderMergeButton(sourceBranch, targetBranch);
+  buttonGroup.appendChild(mergeButton);
   buttonGroup.classList.add("d-flex");
 
   containerDiv.appendChild(buttonGroup);
@@ -123,46 +123,31 @@ async function initialise(
   targetBranch,
   isRebaseInProgress
 ) {
-  const referenceEl = document.querySelector(MR_WIDGET_SECTION);
-  const el = render();
+  const referenceEl = document.querySelector('.mr-state-widget');
+  const el = render(sourceBranch, targetBranch);
   referenceEl.classList.add("mr-widget-workflow");
-  referenceEl.prepend(el);
-
-  renderMergeButton(sourceBranch, targetBranch);
-  const mergeButton = document.getElementById("gitlab-cli-merge");
+  referenceEl.append(el);  
   disableButtons();
-  mergeButton.classList.remove(GITLAB_CLI_BUTTON);
   try {
-    await fetch(
-      `http://localhost:4000/handshake?location=${window.location}`
-    ).then((r) => {
-      if (r.status === 200) {
-        const mergeButton = document.getElementById("gitlab-cli-merge");
-        mergeButton.classList.add(GITLAB_CLI_BUTTON);
-        enableButtons();
-        return true;
-      }
-      if (r.status === 500) {
-        return false;
-      }
-      if (r.status === 512) {
-        const descEl = document.getElementById(GITLAB_CLI_DESC);
-        setContentInDesc("CLI busy");
-        streamBody(r.body, (chunkString) => {
-          descEl.textContent = chunkString;
-        }).then(() => {
-          clearContentInDesc();
+    await ajaxClient
+      .GET({
+        path: `handshake?location=${window.location}`,
+        requestType: "CLIRequest",
+      })
+      .then(async (r) => {
+        if (r.status === 200) {
           const mergeButton = document.getElementById("gitlab-cli-merge");
-          mergeButton.classList.add(GITLAB_CLI_BUTTON);
           enableButtons();
-        });
+          return true;
+        }
+        if (r.status === 400) {
+          setContentInDesc(`URL not Found`);
+        }
         return false;
-      }
-      return false;
-    });
-  } catch {
-    console.log("Server not initialised!");
-    setContentInDesc(`Server not initialised`);
+      });
+  } catch (e) {
+    console.log(e);
+    setContentInDesc(`Server not Initialised`);
   }
 }
 
@@ -210,6 +195,9 @@ const main = () => {
     return;
   }
   const targetNode = document.querySelector(".issuable-discussion");
+  if(!targetNode){
+    return;
+  }
   const config = { childList: true, subtree: true };
 
   const callback = function (mutationList, observer) {

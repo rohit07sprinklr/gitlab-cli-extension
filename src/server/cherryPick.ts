@@ -1,69 +1,65 @@
 const git = require("simple-git");
 
-import {wait} from './utils';
+import { wait, renderPauseMessage } from "./utils";
 
-async function cherryPickCommit(gitLogs, path, res) {
-  for (const gitLog of gitLogs) {
-    if (gitLog.commitScope == false) {
-      res.write(`Skipped Commit-${gitLog.commitID} (${gitLog.commitSHA})`);
-      await wait(1000);
-      continue;
-    }
-    res.write(`Working on Commit-${gitLog.commitID} (${gitLog.commitSHA})`);
-    try {
-      const cherryPickResult = await git(path).raw([
-        "cherry-pick",
-        "-m",
-        "1",
-        `${gitLog.commitSHA}`,
-      ]);
-      console.log(cherryPickResult);
-      await wait(500);
-      console.log("Success");
-      res.write(`Success\n`);
-    } catch (e) {
-      await wait(500);
-      console.log("Failed");
-      res.write(`${e.toString()}\n`);
-      console.log(e);
-    }
-    await wait(500);
-  }
-}
 async function cherryPickProcess(req, res) {
   try {
-    const path = req.body.localPath;
-    const commitBranch = req.body.commitBranch;
-    const targetBranch = req.body.targetBranch;
+    const { localPath, commitBranch, targetBranch, requestType } = req.body;
     await wait(100);
-    try {
-      await git(path).listRemote([
-        "--heads",
-        "--exit-code",
-        "origin",
-        `${commitBranch}`,
-      ]);
-      //If found on remote repo
-      await git(path).fetch("origin", commitBranch);
-      await git(path).checkout(commitBranch);
-      await git(path).raw("reset", "--hard", `origin/${commitBranch}`);
-    } catch {
-      const anss = await git(path).branchLocal();
-      if (anss.all.includes(`${commitBranch}`)) {
-        //Not found on remote repo Found in local repo
-        await git(path).checkout(commitBranch);
+    if (requestType === "new") {
+      await git(localPath).fetch("origin", targetBranch);
+      await git(localPath).checkout(targetBranch);
+      try {
+        await git(localPath).fetch("origin", commitBranch);
+        await git(localPath).checkout(commitBranch);
+        await git(localPath).raw("reset", "--hard", `origin/${commitBranch}`);
+      } catch {
+        try{
+          await git(localPath).checkout(commitBranch);
+        }
+        catch{
+          await git(localPath).checkoutBranch(commitBranch, targetBranch);
+        }
       }
-      //Niether in local nor remote repo checkout new branch from target branch
-      else {
-        await git(path).checkoutBranch(`${commitBranch}`, `${targetBranch}`);
-      }
+    } else if (requestType === "continue") {
+      await git(localPath).checkout(commitBranch);
     }
-
-    await cherryPickCommit(req.body.commits, path, res);
-    //git push --set-upstream origin feature/cherry-pick
+    const commitIds = req.body.commits;
+    let completedCommits = 0;
+    let currentCommitSHA;
+    try {
+      for (const commitId of commitIds) {
+        completedCommits += 1;
+        currentCommitSHA = commitId.commitSHA;
+        res.write(`Cherry pick ${commitId.commitSHA}`);
+        const cherryPickResult = await git(localPath).raw([
+          "cherry-pick",
+          "-m",
+          "1",
+          commitId.commitSHA,
+        ]);
+        await wait(500);
+        console.log(`Cherry-pick ${commitId.commitSHA} Successful`);
+        console.log(cherryPickResult);
+        res.write(`Cherry-pick ${commitId.commitSHA} Successful`);
+        await wait(500);
+      }
+    } catch (e) {
+      await git(localPath).raw(["cherry-pick", "--abort"]);
+      console.log("Failed");
+      res.write(renderPauseMessage(currentCommitSHA, e));
+      await wait(100);
+      res.write(`Paused {${completedCommits}}`);
+      res.end();
+      console.log(e);
+      return;
+    }
+    res.write(`Pushing ${commitBranch}`);
+    await git(localPath).push("origin", commitBranch);
+    res.write("COMPLETED Cherry-Pick");
     res.end();
   } catch (e) {
-    res.write(`${e.toString()}`);
+    res.write(e.toString());
     console.error(e);
     res.end();
   }
